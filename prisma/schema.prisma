@@ -1,0 +1,100 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id    String @id @default(cuid())
+  email String @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  password Password?
+  notes    Note[]
+}
+
+model Password {
+  hash String
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId String @unique
+}
+
+model Note {
+  id    String @id @default(cuid())
+  title String
+  body  String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId String
+}
+
+// data needed to import tasks from an external source
+model Source {
+  id String @id @default(cuid())
+
+  // type of source
+  // - gitlab  
+  type String
+
+  // type of import in use
+  // - pull
+  // - webhook
+  // - pullAndWebhook
+  importType String
+
+  // encrypted json, used to store keys/tokens to access the source
+  // it needs decryption and decoding (json parse) handled by prisma middleware
+  authData String /// @encrypted
+
+  // default context to use for imported tasks
+  defaultContextToUse String?
+
+  // default tags to apply to imported tasks
+  defaultTags String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  Task Task[]
+}
+
+model Task {
+  id         String  @id @default(cuid())
+  projectName    String?
+  
+  // external url for this task, can be used when
+  // the task is imported from an external source
+  webUrl String?
+  
+  title      String
+
+  // markdown supported
+  description String?
+
+  scheduled DateTime?
+
+  due DateTime?
+
+  // comma separated tags
+  tags String?
+
+  // if this task was imported
+  // contains the raw json content based on the source
+  rawImportedData String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // populated if this task was imported from an external source
+  fromSource   Source? @relation(fields: [fromSourceId], references: [id])
+  fromSourceId String?
+}
