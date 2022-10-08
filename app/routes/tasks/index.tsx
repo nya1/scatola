@@ -1,19 +1,13 @@
 import {
   ActionIcon,
-  Badge,
   Button,
-  Chip,
   Grid,
   Group,
-  Stack as div,
-  Table,
   Text,
   TextInput,
   Tooltip,
   useMantineTheme,
 } from "@mantine/core";
-// import { useState } from "react";
-// import { TaskRow } from "./ticketRow";
 import { listTask } from "~/models/task.server";
 import { Link, useLoaderData } from "@remix-run/react";
 import { json } from "@remix-run/node";

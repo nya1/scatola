@@ -1,29 +1,16 @@
-import {
-  Outlet,
-} from "@remix-run/react";
-
+import { Outlet } from "@remix-run/react";
 import { ImportButtonMenu } from "./tasks/importButton";
 import {
   ActionIcon,
-  Button,
-  Container,
   Grid,
   Group,
   Header,
   Text,
-  Code,
   useMantineColorScheme,
   useMantineTheme,
 } from "@mantine/core";
 import { IconBox, IconMoonStars, IconSun } from "@tabler/icons";
 import type { MetaFunction } from "@remix-run/node";
-// import { CreateManualTicket } from "~/components/createManualTicket";
-
-// export async function loader({ request }: LoaderArgs) {
-//   // const userId = await requireUserId(request);
-//   // const noteListItems = await getNoteListItems({ userId });
-//   return json({ noteListItems: [] });
-// }
 
 export const meta: MetaFunction = () => {
   return {
