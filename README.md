@@ -8,7 +8,7 @@ Web-based task manager inspired by taskwarrior.
 
 ## Local development
 
-Contributions are really appreciated, please refer to the [CONTRIBUTING guidelines](./CONTRIBUTING.md).
+All types of contributions are encouraged and valued, please refer to the [CONTRIBUTING guidelines](./CONTRIBUTING.md).
 
 1. install dependencies, because of Remix issues with other package managers **npm** is mandatory
 
