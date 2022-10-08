@@ -73,3 +73,16 @@ export function validateEmail(email: unknown): email is string {
 export function capitalizeFirstLetter(str: string) {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
+
+/**
+ * compute a color from the provided string
+ */
+export const stringToHslColor = (str: string, s: number, l: number) => {
+  var hash = 0;
+  for (var i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + (((hash << 5) >>> 0) - hash);
+  }
+
+  var h = hash % 360;
+  return "hsl(" + h + ", " + s + "%, " + l + "%)";
+};

@@ -18,80 +18,11 @@ import { marked } from "marked";
 import { IconEdit, IconPlus, IconSearch } from "@tabler/icons";
 import { useEffect, useState } from "react";
 import { useDebouncedValue } from "@mantine/hooks";
+import { CustomBadge } from "~/components/customBadge";
 
 export async function loader() {
   const tasks = await listTask();
   return json({ tasks });
-}
-
-function CustomBadge({ children }) {
-  const themes = useMantineTheme();
-
-  const textVal = children;
-
-  const stringToHslColor = (str, s, l) => {
-    var hash = 0;
-    for (var i = 0; i < str.length; i++) {
-      hash = str.charCodeAt(i) + (((hash << 5) >>> 0) - hash);
-    }
-
-    var h = hash % 360;
-    return "hsl(" + h + ", " + s + "%, " + l + "%)";
-  };
-
-  let leftText: string | undefined;
-  let rightText = textVal;
-
-  if (textVal.includes(":")) {
-    // TODO handle multiple :
-    const splitChar = textVal.split(":").map((v) => v.replace(/:/g, "").trim());
-    leftText = splitChar[0];
-    rightText = splitChar[1];
-  }
-
-  const bgColor = stringToHslColor(leftText || textVal, 50, 40);
-
-  return (
-    <>
-      <div
-        style={{
-          verticalAlign: "middle",
-          borderRadius: "32px",
-          display: "inline-flex",
-          overflow: "hidden",
-          color: themes.white,
-          fontSize: "13px",
-          marginRight: "5px",
-          border: `1px solid ${themes.colors.gray[6]}`,
-          backgroundColor: leftText
-            ? themes.colorScheme === "light"
-              ? themes.white
-              : themes.colors.gray[9]
-            : bgColor,
-        }}
-      >
-        {leftText && (
-          <span
-            style={{ backgroundColor: bgColor, padding: "0px 5px 0px 9px" }}
-          >
-            {leftText}
-          </span>
-        )}
-        <span
-          style={{
-            padding: leftText ? "0px 9px 0px 5px" : "0px 9px",
-            color: leftText
-              ? themes.colorScheme === "light"
-                ? themes.colors.gray[9]
-                : themes.white
-              : themes.white,
-          }}
-        >
-          {rightText}
-        </span>
-      </div>
-    </>
-  );
 }
 
 export default function TaskIndexPage() {
@@ -234,22 +165,7 @@ export default function TaskIndexPage() {
               <>
                 {tags &&
                   tags.split(",").map((t, i) => {
-                    //const bgColor = stringToHslColor(t, 70, 50);
-                    //const textColor = "white";
-                    return (
-                      <CustomBadge key={t + i}>{t}</CustomBadge>
-                      // <Badge
-                      //   key={t + i}
-                      //   styles={{
-                      //     inner: { color: textColor },
-                      //     root: { backgroundColor: bgColor },
-                      //   }}
-                      //   mr={5}
-                      //   leftSection={<span>test</span>}
-                      // >
-                      //   {t}
-                      // </Badge>
-                    );
+                    return <CustomBadge key={t + i}>{t}</CustomBadge>;
                   })}
               </>
             ),
