@@ -16,7 +16,7 @@ import {
   useMantineTheme,
 } from "@mantine/core";
 import { IconBox, IconMoonStars, IconSun } from "@tabler/icons";
-import { MetaFunction } from "@remix-run/node";
+import type { MetaFunction } from "@remix-run/node";
 // import { CreateManualTicket } from "~/components/createManualTicket";
 
 // export async function loader({ request }: LoaderArgs) {

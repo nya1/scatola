@@ -1,4 +1,4 @@
-import { MetaFunction } from "@remix-run/node";
+import type { MetaFunction } from "@remix-run/node";
 import {
   Links,
   LiveReload,
@@ -7,11 +7,12 @@ import {
   Scripts,
   ScrollRestoration,
 } from "@remix-run/react";
+import type {
+  ColorScheme} from "@mantine/core";
 import {
   MantineProvider,
   createEmotionCache,
-  ColorSchemeProvider,
-  ColorScheme,
+  ColorSchemeProvider
 } from "@mantine/core";
 import { StylesPlaceholder } from "@mantine/remix";
 
