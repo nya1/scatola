@@ -1,7 +1,7 @@
 import type { ActionFunction, MetaFunction} from "@remix-run/node";
 import { redirect } from "@remix-run/node";
 import { createTask } from "~/models/task.server";
-import { TaskModal } from "./taskModal";
+import { TaskModal } from "~/components/taskModal";
 
 export const meta: MetaFunction = () => {
   return {

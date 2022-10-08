@@ -4,7 +4,7 @@ import { Form, useCatch, useLoaderData } from "@remix-run/react";
 import invariant from "tiny-invariant";
 
 import { getTask, updateTask } from "~/models/task.server";
-import { TaskModal } from "../taskModal";
+import { TaskModal } from "~/components/taskModal";
 
 export async function loader({ request, params }: LoaderArgs) {
   const task = await getTask({ id: params.taskId });

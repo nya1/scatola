@@ -13,11 +13,7 @@ import type { Task } from "@prisma/client";
 import { Form, useNavigate } from "@remix-run/react";
 import { useState } from "react";
 import type { SerializeFrom } from "@remix-run/server-runtime";
-
-// TODO move me
-function capitalizeFirstLetter(str: string) {
-  return str.charAt(0).toUpperCase() + str.slice(1);
-}
+import { capitalizeFirstLetter } from "~/utils";
 
 /**
  * task modal, used for creation and update
