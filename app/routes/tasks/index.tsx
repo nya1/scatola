@@ -14,11 +14,11 @@ import { json } from "@remix-run/node";
 import { DataTable } from "mantine-datatable";
 import type { QUnitType } from "dayjs";
 import dayjs from "dayjs";
-import { marked } from "marked";
 import { IconEdit, IconPlus, IconSearch } from "@tabler/icons";
 import { useEffect, useState } from "react";
 import { useDebouncedValue } from "@mantine/hooks";
 import { CustomBadge } from "~/components/customBadge";
+import { safeMarked } from "~/utils";
 
 export async function loader() {
   const tasks = await listTask();
@@ -195,13 +195,10 @@ export default function TaskIndexPage() {
           },
           content: ({ record }) => (
             <div style={{ padding: "2px 15px" }}>
-              {/* TODO maybe move markdown->html to server? */}
-              {/* TODO sanitize html with DOMPurify */}
-              {/* TODO add programming language syntax highlight via highlight.js */}
               {record?.description ? (
                 <div
                   dangerouslySetInnerHTML={{
-                    __html: marked(record.description),
+                    __html: safeMarked(record.description),
                   }}
                 />
               ) : (
@@ -213,9 +210,6 @@ export default function TaskIndexPage() {
             </div>
           ),
         }}
-
-        // execute this callback when a row is clicked
-        // onRowClick={(row) => alert(`You clicked on ${JSON.stringify(row)}.`)}
       />
     </>
   );

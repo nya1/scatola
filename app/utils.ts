@@ -1,5 +1,7 @@
 import { useMatches } from "@remix-run/react";
+import { marked } from "marked";
 import { useMemo } from "react";
+import { sanitize } from "dompurify";
 
 import type { User } from "~/models/user.server";
 
@@ -77,7 +79,7 @@ export function capitalizeFirstLetter(str: string) {
 /**
  * compute a color from the provided string
  */
-export const stringToHslColor = (str: string, s: number, l: number) => {
+export function stringToHslColor(str: string, s: number, l: number) {
   var hash = 0;
   for (var i = 0; i < str.length; i++) {
     hash = str.charCodeAt(i) + (((hash << 5) >>> 0) - hash);
@@ -86,3 +88,11 @@ export const stringToHslColor = (str: string, s: number, l: number) => {
   var h = hash % 360;
   return "hsl(" + h + ", " + s + "%, " + l + "%)";
 };
+
+// TODO move this server side?
+/**
+ * safely transform markdown string to parsed html
+ */
+export function safeMarked(markdownStr: string) {
+  return sanitize(marked(markdownStr));
+}
