@@ -1,4 +1,6 @@
-import { Form, Link, NavLink, Outlet, useLoaderData } from "@remix-run/react";
+import {
+  Outlet,
+} from "@remix-run/react";
 
 import { ImportButtonMenu } from "./tasks/importButton";
 import {
@@ -14,6 +16,7 @@ import {
   useMantineTheme,
 } from "@mantine/core";
 import { IconBox, IconMoonStars, IconSun } from "@tabler/icons";
+import { MetaFunction } from "@remix-run/node";
 // import { CreateManualTicket } from "~/components/createManualTicket";
 
 // export async function loader({ request }: LoaderArgs) {
@@ -21,6 +24,12 @@ import { IconBox, IconMoonStars, IconSun } from "@tabler/icons";
 //   // const noteListItems = await getNoteListItems({ userId });
 //   return json({ noteListItems: [] });
 // }
+
+export const meta: MetaFunction = () => {
+  return {
+    title: `Tasks list | Scatola`,
+  };
+};
 
 export default function TasksPage() {
   // const data = useLoaderData<typeof loader>();

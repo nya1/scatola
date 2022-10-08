@@ -1,4 +1,4 @@
-import type { ActionArgs, LoaderArgs } from "@remix-run/node";
+import type { ActionArgs, LoaderArgs, MetaFunction } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { Form, useCatch, useLoaderData } from "@remix-run/react";
 import invariant from "tiny-invariant";
@@ -15,9 +15,16 @@ export async function loader({ request, params }: LoaderArgs) {
   return json({ task });
 }
 
-export async function action({ request, params }: ActionArgs) {
-  console.log('action trigger')
+export const meta: MetaFunction<typeof loader> = ({
+  params,
+}) => {
+  const taskId = params.taskId;
+  return {
+    title: `Update task ${taskId} | Scatola`,
+  };
+};
 
+export async function action({ request, params }: ActionArgs) {
   invariant(typeof params.taskId === 'string' || params.taskId, "expected taskId");
 
   const body = await request.formData();

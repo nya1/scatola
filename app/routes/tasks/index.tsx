@@ -25,9 +25,7 @@ import { useEffect, useState } from "react";
 import { useDebouncedValue } from "@mantine/hooks";
 
 export async function loader() {
-  console.log("loading tasks");
   const tasks = await listTask();
-  console.log("tasks result", tasks);
   return json({ tasks });
 }
 
@@ -43,7 +41,6 @@ function CustomBadge({ children }) {
     }
 
     var h = hash % 360;
-    console.log(str, "--h-->", h);
     return "hsl(" + h + ", " + s + "%, " + l + "%)";
   };
 
@@ -103,8 +100,6 @@ function CustomBadge({ children }) {
 }
 
 export default function TaskIndexPage() {
-  console.log("step1");
-
   const theme = useMantineTheme();
 
   const data = useLoaderData<typeof loader>();
@@ -117,7 +112,6 @@ export default function TaskIndexPage() {
   useEffect(() => {
     setRecords(
       initialRecords.filter((task) => {
-        console.log("debouncedQuery", debouncedQuery);
         // specific filtering for `project:<dynamic>`
         if (
           debouncedQuery.startsWith("project:") &&

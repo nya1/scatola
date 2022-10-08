@@ -1,6 +1,12 @@
-import { ActionFunction, redirect } from "@remix-run/node";
+import { ActionFunction, MetaFunction, redirect } from "@remix-run/node";
 import { createTask } from "~/models/task.server";
 import { TaskModal } from "./taskModal";
+
+export const meta: MetaFunction = () => {
+  return {
+    title: `Create new task | Scatola`,
+  };
+};
 
 export const action: ActionFunction = async ({ request }) => {
   const body = await request.formData();
