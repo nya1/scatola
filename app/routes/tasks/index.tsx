@@ -8,6 +8,7 @@ import {
   Popover,
   SegmentedControl,
   Stack,
+  Table,
   Tabs,
   Text,
   TextInput,
@@ -15,7 +16,13 @@ import {
   useMantineTheme,
 } from "@mantine/core";
 import { listTask } from "~/models/task.server";
-import { Form, Link, useLoaderData } from "@remix-run/react";
+import {
+  Form,
+  Link,
+  useLoaderData,
+  useNavigate,
+  useTransition,
+} from "@remix-run/react";
 import { json, LoaderFunction } from "@remix-run/node";
 import { DataTable } from "mantine-datatable";
 import type { QUnitType } from "dayjs";
@@ -24,17 +31,27 @@ import { IconEdit, IconPlus, IconSearch } from "@tabler/icons";
 import React, { useEffect, useState } from "react";
 import { useDebouncedValue } from "@mantine/hooks";
 import { CustomBadge } from "~/components/customBadge";
-import { capitalizeFirstLetter, safeMarked } from "~/utils";
+import {
+  capitalizeFirstLetter,
+  safeMarked,
+  useTransitionTracking,
+} from "~/utils";
 import { listContext } from "~/models/context.server";
 
 type LoaderData = Awaited<ReturnType<typeof getLoaderData>>;
 
 async function getLoaderData(queryParams?: URLSearchParams) {
-  const tasks = await listTask();
-
   const contexts = await listContext();
-
+  console.log('contexts', contexts);
   const activeContext = queryParams?.get("context");
+  console.log("activeContext", activeContext);
+
+  const rawTags = activeContext
+    ? contexts.find((c) => c.name === activeContext)?.tags
+    : undefined;
+  const tags = rawTags ? rawTags.split(",") : [];
+  console.log("loaded tags", tags);
+  const tasks = await listTask({ tags });
 
   return {
     tasks,
@@ -59,6 +76,19 @@ export default function TaskIndexPage() {
   const [query, setQuery] = useState("");
   const [debouncedQuery] = useDebouncedValue(query, 200);
 
+  const transition = useTransitionTracking();
+
+  const [popoverOpened, setPopoverOpened] = useState(false);
+
+  // TODO make this based on URL change (context query param)
+  // close popover when a new context is created
+  useEffect(() => {
+    if (popoverOpened && transition.stateChangedTo === "loading") {
+      console.log("context created, closing popover");
+      setPopoverOpened(false);
+    }
+  }, [transition.stateChangedTo, popoverOpened]);
+
   useEffect(() => {
     setRecords(
       initialRecords.filter((task) => {
@@ -81,7 +111,6 @@ export default function TaskIndexPage() {
         return true;
       })
     );
-    // TODO ??
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedQuery]);
 
@@ -108,15 +137,28 @@ export default function TaskIndexPage() {
     return dueDate;
   };
 
-  const captureAddContextClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const NEW_CONTEXT_TAB = "____new-context";
+
+  const [activeTab, __setActiveTab] = useState<string | null>(
+    data.activeContext || "all"
+  );
+  const navigate = useNavigate();
+
+  // on tab change update filters to use
+  const setActiveTab = (tabVal: string) => {
+    if (tabVal === NEW_CONTEXT_TAB) {
+      return;
+    }
+    navigate("/tasks?context=" + tabVal);
+    __setActiveTab(tabVal);
+    console.log("tab changed", tabVal);
   };
 
   return (
     <>
       <Stack align="center">
         {/* TODO make default dynamic based on url (checkout mantine) */}
-        <Tabs color="teal" defaultValue={data.activeContext || "all"}>
+        <Tabs color="teal" value={activeTab} onTabChange={setActiveTab}>
           <Tabs.List>
             <Tabs.Tab value="all">
               <Text color={theme.colors.blue[7]}>All</Text>
@@ -131,10 +173,17 @@ export default function TaskIndexPage() {
                 );
               })}
 
-            <Popover width={350} position="bottom" withArrow shadow="md">
+            <Popover
+              opened={popoverOpened}
+              width={350}
+              position="bottom"
+              withArrow
+              shadow="md"
+            >
               <Popover.Target>
                 <Tabs.Tab
-                  value="____new-context"
+                  value={NEW_CONTEXT_TAB}
+                  onClick={() => setPopoverOpened((o) => !o)}
                 >
                   <Text
                     color={
@@ -177,7 +226,11 @@ export default function TaskIndexPage() {
                       // defaultValue={preloadedData && preloadedData.length > 0 ? preloadedData : undefined}
                     />
 
-                    <Button fullWidth type="submit">
+                    <Button
+                      fullWidth
+                      type="submit"
+                      disabled={transition.state === "submitting"}
+                    >
                       Add
                     </Button>
                   </Form>
@@ -225,22 +278,13 @@ export default function TaskIndexPage() {
         </Grid.Col>
       </Grid>
 
-      {/* // <Table highlightOnHover>
-    //   <thead>
-    //     <tr>
-    //       <th>Project</th>
-    //       <th>Title</th>
-    //       <th>Due</th>
-    //       <th>Tags</th>
-    //     </tr>
-    //   </thead>
-    //   <tbody>
-    //     {data.tasks.map((t, i) => (
-    //       <TaskRow task={t} key={i} />
-    //     ))}
-    //   </tbody>
-    // </Table> */}
-      <DataTable
+      <div>
+          {data.tasks.map((t, i) => (
+            <div key={"ttt"+i}>{JSON.stringify(t)}</div>
+          ))}
+      </div>
+
+      {/* <DataTable
         highlightOnHover
         // provide data
         records={records}
@@ -323,7 +367,7 @@ export default function TaskIndexPage() {
             </div>
           ),
         }}
-      />
+      /> */}
     </>
   );
 }

@@ -57,8 +57,22 @@ export async function getAllProjectsUsed() {
   return queryRes.map((v) => v.projectName).flat();
 }
 
-export function listTask(): PrismaPromise<TaskWithSource[]> {
+export function listTask(params?: {
+  tags: string[];
+}): PrismaPromise<TaskWithSource[]> {
+  const where: Prisma.TaskWhereInput | undefined = params && params.tags?.length > 0
+    ? {
+        OR: params.tags.map((t): Prisma.TaskWhereInput => {
+          return {
+            tags: {
+              contains: t,
+            },
+          };
+        }),
+      }
+    : undefined;
   return prisma.task.findMany({
+    where,
     include: {
       fromSource: true,
     },

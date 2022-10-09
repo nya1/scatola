@@ -1,6 +1,6 @@
-import { useMatches } from "@remix-run/react";
+import { useMatches, useTransition } from "@remix-run/react";
 import { marked } from "marked";
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { sanitize } from "dompurify";
 
 import type { User } from "~/models/user.server";
@@ -88,6 +88,22 @@ export function stringToHslColor(str: string, s: number, l: number) {
   var h = hash % 360;
   return "hsl(" + h + ", " + s + "%, " + l + "%)";
 };
+
+// from https://github.com/remix-run/remix/discussions/3313
+export function useTransitionTracking() {
+  const transition = useTransition()
+  const prevState = useRef(transition.state)
+
+  useEffect(() => {
+    prevState.current = transition.state
+  }, [transition.state])
+
+  return {
+    ...transition,
+    stateChangedTo:
+      prevState.current === transition.state ? null : transition.state
+  }
+}
 
 // TODO move this server side?
 /**
