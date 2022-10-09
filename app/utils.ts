@@ -3,6 +3,9 @@ import { marked } from "marked";
 import { useEffect, useMemo, useRef } from "react";
 import { sanitize } from "dompurify";
 
+import type { QUnitType } from "dayjs";
+import dayjs from "dayjs";
+
 import type { User } from "~/models/user.server";
 
 const DEFAULT_REDIRECT = "/";
@@ -121,3 +124,27 @@ export function useTransitionTracking() {
 export function safeMarked(markdownStr: string) {
   return sanitize(marked(markdownStr));
 }
+
+
+export function toHumanReadableDate (dueDate?: string | null) {
+  if (dueDate) {
+    const diffToCheck = ["month", "day", "hour"];
+    // TODO improve typing
+    const humanDiffMapping: { [key: string]: string | string[] } = {
+      month: "mth", // TODO support mths
+      day: "d",
+      hour: "hr",
+    };
+    const dueDateObj = dayjs(dueDate);
+    const now = new Date();
+    for (const diff of diffToCheck) {
+      const diffRes = dueDateObj.diff(now, diff as QUnitType);
+      if (diffRes > 0) {
+        const humanSuffix = humanDiffMapping[diff];
+        dueDate = `${diffRes}${humanSuffix}`;
+        break;
+      }
+    }
+  }
+  return dueDate;
+};

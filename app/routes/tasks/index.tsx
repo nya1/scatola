@@ -6,9 +6,7 @@ import {
   Group,
   MultiSelect,
   Popover,
-  SegmentedControl,
   Stack,
-  Table,
   Tabs,
   Text,
   TextInput,
@@ -16,28 +14,22 @@ import {
   useMantineTheme,
 } from "@mantine/core";
 import { listTask } from "~/models/task.server";
-import {
-  Form,
-  Link,
-  useLoaderData,
-  useNavigate,
-  useTransition,
-} from "@remix-run/react";
+import { Form, Link, useLoaderData, useNavigate } from "@remix-run/react";
 import type { LoaderFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { DataTable } from "mantine-datatable";
-import type { QUnitType } from "dayjs";
-import dayjs from "dayjs";
 import { IconEdit, IconPlus, IconSearch } from "@tabler/icons";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useDebouncedValue } from "@mantine/hooks";
 import { CustomBadge } from "~/components/customBadge";
 import {
   capitalizeFirstLetter,
   safeMarked,
+  toHumanReadableDate,
   useTransitionTracking,
 } from "~/utils";
 import { listContext } from "~/models/context.server";
+import dayjs from "dayjs";
 
 type LoaderData = Awaited<ReturnType<typeof getLoaderData>>;
 
@@ -114,29 +106,6 @@ export default function TaskIndexPage() {
       })
     );
   }, [debouncedQuery, initialRecords]);
-
-  const toHumanReadableDate = (dueDate?: string | null) => {
-    if (dueDate) {
-      const diffToCheck = ["month", "day", "hour"];
-      // TODO improve typing
-      const humanDiffMapping: { [key: string]: string | string[] } = {
-        month: "mth", // TODO support mths
-        day: "d",
-        hour: "hr",
-      };
-      const dueDateObj = dayjs(dueDate);
-      const now = new Date();
-      for (const diff of diffToCheck) {
-        const diffRes = dueDateObj.diff(now, diff as QUnitType);
-        if (diffRes > 0) {
-          const humanSuffix = humanDiffMapping[diff];
-          dueDate = `${diffRes}${humanSuffix}`;
-          break;
-        }
-      }
-    }
-    return dueDate;
-  };
 
   const NEW_CONTEXT_TAB = "____new-context";
 
