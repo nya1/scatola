@@ -67,6 +67,15 @@ model Source {
   Task Task[]
 }
 
+// default tags to use in filtering the view and during task creation
+model Context {
+  id         String  @id @default(cuid())
+
+  name String
+
+  tags String
+}
+
 model Task {
   id         String  @id @default(cuid())
   projectName    String?

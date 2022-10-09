@@ -1,8 +1,11 @@
 import {
   ActionIcon,
+  Box,
   Button,
   Grid,
   Group,
+  MultiSelect,
+  Popover,
   SegmentedControl,
   Stack,
   Tabs,
@@ -12,8 +15,8 @@ import {
   useMantineTheme,
 } from "@mantine/core";
 import { listTask } from "~/models/task.server";
-import { Link, useLoaderData } from "@remix-run/react";
-import { json } from "@remix-run/node";
+import { Form, Link, useLoaderData } from "@remix-run/react";
+import { json, LoaderFunction } from "@remix-run/node";
 import { DataTable } from "mantine-datatable";
 import type { QUnitType } from "dayjs";
 import dayjs from "dayjs";
@@ -21,17 +24,35 @@ import { IconEdit, IconPlus, IconSearch } from "@tabler/icons";
 import React, { useEffect, useState } from "react";
 import { useDebouncedValue } from "@mantine/hooks";
 import { CustomBadge } from "~/components/customBadge";
-import { safeMarked } from "~/utils";
+import { capitalizeFirstLetter, safeMarked } from "~/utils";
+import { listContext } from "~/models/context.server";
 
-export async function loader() {
+type LoaderData = Awaited<ReturnType<typeof getLoaderData>>;
+
+async function getLoaderData(queryParams?: URLSearchParams) {
   const tasks = await listTask();
-  return json({ tasks });
+
+  const contexts = await listContext();
+
+  const activeContext = queryParams?.get("context");
+
+  return {
+    tasks,
+    activeContext,
+    contexts,
+  };
 }
+
+export const loader: LoaderFunction = async ({ request, context }) => {
+  const url = new URL(request.url);
+
+  return json<LoaderData>(await getLoaderData(url.searchParams));
+};
 
 export default function TaskIndexPage() {
   const theme = useMantineTheme();
 
-  const data = useLoaderData<typeof loader>();
+  const data = useLoaderData<LoaderData>();
   const initialRecords = data.tasks;
   const [records, setRecords] = useState(initialRecords);
 
@@ -87,26 +108,84 @@ export default function TaskIndexPage() {
     return dueDate;
   };
 
-  const addContext = (e: React.MouseEvent) => {
+  const captureAddContextClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-
-    window.alert("add new context!");
   };
 
   return (
     <>
       <Stack align="center">
         {/* TODO make default dynamic based on url (checkout mantine) */}
-        {/* <Tabs color="teal" defaultValue="all">
+        <Tabs color="teal" defaultValue={data.activeContext || "all"}>
           <Tabs.List>
             <Tabs.Tab value="all">
               <Text color={theme.colors.blue[7]}>All</Text>
             </Tabs.Tab>
-            <Tabs.Tab value="test" onClickCapture={addContext}>
-              <Text color={theme.colors.gray[7]}>+ Add context</Text>
-            </Tabs.Tab>
+
+            {data.contexts &&
+              data.contexts.map((c, i) => {
+                return (
+                  <Tabs.Tab value={c.name} key={`${c}_${i}`}>
+                    <Text>{capitalizeFirstLetter(c.name)}</Text>
+                  </Tabs.Tab>
+                );
+              })}
+
+            <Popover width={350} position="bottom" withArrow shadow="md">
+              <Popover.Target>
+                <Tabs.Tab
+                  value="____new-context"
+                >
+                  <Text
+                    color={
+                      theme.colorScheme === "light"
+                        ? theme.colors.gray[7]
+                        : theme.colors.gray[4]
+                    }
+                  >
+                    + Add context
+                  </Text>
+                </Tabs.Tab>
+              </Popover.Target>
+
+              <Popover.Dropdown>
+                <Box>
+                  <Form method="post" action="/tasks/context">
+                    <TextInput
+                      name="name"
+                      label="Context name"
+                      description="e.g. home or companyx"
+                      pb={8}
+                    />
+
+                    <MultiSelect
+                      name="tags"
+                      label="Tags for this context"
+                      description="used as filters in list view and automatically applied on new tasks"
+                      data={[]}
+                      // value={tags}
+                      clearable
+                      placeholder="Pick or create one or more tags"
+                      searchable
+                      creatable
+                      getCreateLabel={(query) => `+ add ${query}`}
+                      // onCreate={(query) => {
+                      //   setTags((current) => [...current, query]);
+                      //   return query;
+                      // }}
+                      pb={14}
+                      // defaultValue={preloadedData && preloadedData.length > 0 ? preloadedData : undefined}
+                    />
+
+                    <Button fullWidth type="submit">
+                      Add
+                    </Button>
+                  </Form>
+                </Box>
+              </Popover.Dropdown>
+            </Popover>
           </Tabs.List>
-        </Tabs> */}
+        </Tabs>
         {/* 
         <SegmentedControl
           data={[
