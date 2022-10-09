@@ -15,6 +15,48 @@ export type TaskWithSource = Task & {
 };
 export type { Task } from "@prisma/client";
 
+export enum TaskStatus {
+  PENDING = "pending",
+  COMPLETED = "completed",
+  DELETED = "deleted",
+  WAITING = "waiting",
+}
+
+/**
+ * returns the tags that we have used so far
+ * will split tags column
+ */
+export async function getAllTagsUsed() {
+  // TODO order by created at date
+  const queryRes = await prisma.$queryRaw<{ tags: string }[]>`
+    WITH RECURSIVE split(tags, str) AS (
+      SELECT '', tags||',' FROM "Task"
+      UNION ALL SELECT
+      substr(str, 0, instr(str, ',')),
+      substr(str, instr(str, ',')+1)
+      FROM split WHERE str!=''
+    )
+    SELECT DISTINCT tags
+    FROM split
+    WHERE tags!='';
+  `;
+  return queryRes.map((v) => v.tags).flat();
+}
+
+/**
+ * returns all project names used so far
+ */
+export async function getAllProjectsUsed() {
+  // note: prisma orm methods doesn't support a real distinct query,
+  // we must write a manual query for performance
+  // ref https://github.com/prisma/prisma/issues/14765
+
+  const queryRes = await prisma.$queryRaw<
+    { projectName: string }[]
+  >`SELECT DISTINCT projectName FROM "Task" WHERE projectName != '' ORDER BY "updatedAt";`;
+  return queryRes.map((v) => v.projectName).flat();
+}
+
 export function listTask(): PrismaPromise<TaskWithSource[]> {
   return prisma.task.findMany({
     include: {

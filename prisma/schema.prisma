@@ -70,6 +70,13 @@ model Source {
 model Task {
   id         String  @id @default(cuid())
   projectName    String?
+
+  // status of task
+  // pending = still working on the task
+  // waiting = a scheduled future date was used, the task is hidden
+  // completed = task successfully completed
+  // deleted = task deleted because it's no longer relevant
+  status String @default("pending")
   
   // external url for this task, can be used when
   // the task is imported from an external source

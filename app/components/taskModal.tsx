@@ -21,13 +21,21 @@ import { capitalizeFirstLetter } from "~/utils";
 export function TaskModal(params: {
   actionType: "create" | "update";
   prefillData?: SerializeFrom<Task>;
+  availableTags?: string[];
+  availableProjects?: string[];
 }) {
   const navigate = useNavigate();
 
   const theme = useMantineTheme();
 
+  const availableProjects = Array.from(new Set<string>(params?.availableProjects || []));
+  console.log("projects", availableProjects);
+
   const preloadedData: string[] = params.prefillData?.tags ? params.prefillData.tags.split(',') : [];
-  const [tags, setTags] = useState<string[]>(preloadedData);
+  const availableTags = new Set<string>(params?.availableTags || []);
+  
+  console.log("availableTags", availableTags);
+  const [tags, setTags] = useState<string[]>(Array.from(availableTags));
   // console.log('before set tags', params.prefillData);
   // if (typeof params.prefillData?.tags === 'string') {
   //   //const loadedTags = params.prefillData.tags.split(',');
@@ -59,7 +67,7 @@ export function TaskModal(params: {
             name="projectName"
             label="Project"
             placeholder="Type or pick one"
-            data={[]}
+            data={availableProjects}
             limit={5}
             pb={20}
             defaultValue={params.prefillData?.projectName || undefined}

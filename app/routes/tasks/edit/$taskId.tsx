@@ -3,7 +3,12 @@ import { json, redirect } from "@remix-run/node";
 import { Form, useCatch, useLoaderData } from "@remix-run/react";
 import invariant from "tiny-invariant";
 
-import { getTask, updateTask } from "~/models/task.server";
+import {
+  getAllProjectsUsed,
+  getAllTagsUsed,
+  getTask,
+  updateTask,
+} from "~/models/task.server";
 import { TaskModal } from "~/components/taskModal";
 
 export async function loader({ request, params }: LoaderArgs) {
@@ -12,12 +17,15 @@ export async function loader({ request, params }: LoaderArgs) {
     throw new Response("Not Found", { status: 404 });
   }
 
-  return json({ task });
+  // TODO move get project and tags to client side
+  const projectList = await getAllProjectsUsed();
+
+  const tagsList = await getAllTagsUsed();
+
+  return json({ task, tagsList, projectList });
 }
 
-export const meta: MetaFunction<typeof loader> = ({
-  params,
-}) => {
+export const meta: MetaFunction<typeof loader> = ({ params }) => {
   const taskId = params.taskId;
   return {
     title: `Update task ${taskId} | Scatola`,
@@ -25,29 +33,36 @@ export const meta: MetaFunction<typeof loader> = ({
 };
 
 export async function action({ request, params }: ActionArgs) {
-  invariant(typeof params.taskId === 'string' || params.taskId, "expected taskId");
+  invariant(
+    typeof params.taskId === "string" || params.taskId,
+    "expected taskId"
+  );
 
   const body = await request.formData();
 
+  await updateTask(params.taskId, {
+    title: body.get("title") as string,
+    description: body.get("description") as string,
+    tags: body.get("tags") as string,
+    due: new Date(body.get("due") as string),
+    projectName: body.get("projectName") as string,
+    scheduled: new Date(body.get("scheduled") as string),
+  });
 
-  await updateTask(
-    params.taskId,
-    {
-      title: body.get("title") as string,
-      description: body.get("description") as string,
-      tags: body.get("tags") as string,
-      due: new Date(body.get("due") as string),
-      projectName: body.get("projectName") as string,
-      scheduled: new Date(body.get("scheduled") as string),
-  })
-  
   return redirect("/tasks");
 }
 
 export default function EditTaskPage() {
   const data = useLoaderData<typeof loader>();
 
-  return (<TaskModal actionType='update' prefillData={data.task}/>);
+  return (
+    <TaskModal
+      actionType="update"
+      prefillData={data.task}
+      availableTags={data.tagsList}
+      availableProjects={data.projectList}
+    />
+  );
 }
 
 export function ErrorBoundary({ error }: { error: Error }) {

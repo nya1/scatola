@@ -3,6 +3,9 @@ import {
   Button,
   Grid,
   Group,
+  SegmentedControl,
+  Stack,
+  Tabs,
   Text,
   TextInput,
   Tooltip,
@@ -15,7 +18,7 @@ import { DataTable } from "mantine-datatable";
 import type { QUnitType } from "dayjs";
 import dayjs from "dayjs";
 import { IconEdit, IconPlus, IconSearch } from "@tabler/icons";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useDebouncedValue } from "@mantine/hooks";
 import { CustomBadge } from "~/components/customBadge";
 import { safeMarked } from "~/utils";
@@ -84,8 +87,37 @@ export default function TaskIndexPage() {
     return dueDate;
   };
 
+  const addContext = (e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    window.alert("add new context!");
+  };
+
   return (
     <>
+      <Stack align="center">
+        {/* TODO make default dynamic based on url (checkout mantine) */}
+        {/* <Tabs color="teal" defaultValue="all">
+          <Tabs.List>
+            <Tabs.Tab value="all">
+              <Text color={theme.colors.blue[7]}>All</Text>
+            </Tabs.Tab>
+            <Tabs.Tab value="test" onClickCapture={addContext}>
+              <Text color={theme.colors.gray[7]}>+ Add context</Text>
+            </Tabs.Tab>
+          </Tabs.List>
+        </Tabs> */}
+        {/* 
+        <SegmentedControl
+          data={[
+            { label: "React", value: "react" },
+            { label: "Angular", value: "ng" },
+            { label: "Vue", value: "vue" },
+            { label: "Svelte", value: "svelte" },
+          ]}
+        /> */}
+      </Stack>
+
       <Grid justify="center" align="center">
         <Grid.Col span={1}>
           <Button
@@ -161,11 +193,13 @@ export default function TaskIndexPage() {
           {
             accessor: "tags",
             // this column has custom cell data rendering
-            render: ({ tags }) => (
+            render: ({ id, tags }) => (
               <>
                 {tags &&
                   tags.split(",").map((t, i) => {
-                    return <CustomBadge key={t + i}>{t}</CustomBadge>;
+                    return (
+                      <CustomBadge key={`${id}_${t}_${i}`}>{t}</CustomBadge>
+                    );
                   })}
               </>
             ),

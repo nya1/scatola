@@ -74,14 +74,7 @@ export default function TasksPage() {
         </Grid>
       </Header>
 
-      <main className="flex h-full bg-white">
-        <div className="flex-1 p-6">
-          {/* <CreateManualTicket /> */}
-          {/* <Link to="/tasks/new">New task</Link>
-           */}
-          <Outlet />
-        </div>
-      </main>
+      <Outlet />
     </div>
   );
 }
