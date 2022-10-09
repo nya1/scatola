@@ -23,12 +23,13 @@ import {
   useNavigate,
   useTransition,
 } from "@remix-run/react";
-import { json, LoaderFunction } from "@remix-run/node";
+import type { LoaderFunction } from "@remix-run/node";
+import { json } from "@remix-run/node";
 import { DataTable } from "mantine-datatable";
 import type { QUnitType } from "dayjs";
 import dayjs from "dayjs";
 import { IconEdit, IconPlus, IconSearch } from "@tabler/icons";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useDebouncedValue } from "@mantine/hooks";
 import { CustomBadge } from "~/components/customBadge";
 import {
@@ -42,25 +43,26 @@ type LoaderData = Awaited<ReturnType<typeof getLoaderData>>;
 
 async function getLoaderData(queryParams?: URLSearchParams) {
   const contexts = await listContext();
-  console.log('contexts', contexts);
+  console.debug("contexts", contexts);
   const activeContext = queryParams?.get("context");
-  console.log("activeContext", activeContext);
+  console.debug("activeContext", activeContext);
 
   const rawTags = activeContext
     ? contexts.find((c) => c.name === activeContext)?.tags
     : undefined;
   const tags = rawTags ? rawTags.split(",") : [];
-  console.log("loaded tags", tags);
+  console.debug("loaded tags", tags);
   const tasks = await listTask({ tags });
 
   return {
     tasks,
     activeContext,
     contexts,
+    tagsOfContext: tags?.join(","),
   };
 }
 
-export const loader: LoaderFunction = async ({ request, context }) => {
+export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
 
   return json<LoaderData>(await getLoaderData(url.searchParams));
@@ -84,7 +86,7 @@ export default function TaskIndexPage() {
   // close popover when a new context is created
   useEffect(() => {
     if (popoverOpened && transition.stateChangedTo === "loading") {
-      console.log("context created, closing popover");
+      console.debug("context created, closing popover");
       setPopoverOpened(false);
     }
   }, [transition.stateChangedTo, popoverOpened]);
@@ -111,8 +113,7 @@ export default function TaskIndexPage() {
         return true;
       })
     );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedQuery]);
+  }, [debouncedQuery, initialRecords]);
 
   const toHumanReadableDate = (dueDate?: string | null) => {
     if (dueDate) {
@@ -146,19 +147,39 @@ export default function TaskIndexPage() {
 
   // on tab change update filters to use
   const setActiveTab = (tabVal: string) => {
+    console.debug("setActiveTab", tabVal);
     if (tabVal === NEW_CONTEXT_TAB) {
       return;
     }
+    if (tabVal === "all") {
+      navigate("/tasks");
+      return __setActiveTab(tabVal);
+    }
+
     navigate("/tasks?context=" + tabVal);
     __setActiveTab(tabVal);
-    console.log("tab changed", tabVal);
   };
+
+  // calculates the new task url to use
+  // it must contain all tags to be applied and the context (for later redirect)
+  let newTaskUrl = `/tasks/new`;
+  if (data.activeContext) {
+    newTaskUrl += `?context=${data.activeContext}`;
+    if (data.tagsOfContext && data.tagsOfContext.length > 0) {
+      newTaskUrl += `&tags=${data.tagsOfContext}`;
+    }
+  }
 
   return (
     <>
       <Stack align="center">
         {/* TODO make default dynamic based on url (checkout mantine) */}
-        <Tabs color="teal" value={activeTab} onTabChange={setActiveTab}>
+        <Tabs
+          color="teal"
+          value={activeTab}
+          onTabChange={setActiveTab}
+          defaultValue="all"
+        >
           <Tabs.List>
             <Tabs.Tab value="all">
               <Text color={theme.colors.blue[7]}>All</Text>
@@ -259,7 +280,7 @@ export default function TaskIndexPage() {
             leftIcon={<IconPlus size={18} />}
             pr={12}
             ml={6}
-            to="/tasks/new"
+            to={newTaskUrl}
           >
             New task
           </Button>
@@ -278,13 +299,19 @@ export default function TaskIndexPage() {
         </Grid.Col>
       </Grid>
 
-      <div>
-          {data.tasks.map((t, i) => (
+      {/* <div>
+          {records.map((t, i) => (
             <div key={"ttt"+i}>{JSON.stringify(t)}</div>
           ))}
-      </div>
+      </div> */}
 
-      {/* <DataTable
+      <DataTable
+        minHeight={150}
+        emptyState={
+          <div>
+            <Text>No tasks found</Text>
+          </div>
+        }
         highlightOnHover
         // provide data
         records={records}
@@ -367,7 +394,7 @@ export default function TaskIndexPage() {
             </div>
           ),
         }}
-      /> */}
+      />
     </>
   );
 }

@@ -72,6 +72,15 @@ export function validateEmail(email: unknown): email is string {
   return typeof email === "string" && email.length > 3 && email.includes("@");
 }
 
+export function composeRedirectUrlWithContext(newPath: string, originalUrl: URL) {
+  let path = `${newPath}`;
+  const contextToUse = originalUrl.searchParams?.get('context');
+  if (contextToUse) {
+    path += `?context=${contextToUse}`
+  }
+  return path;
+}
+
 export function capitalizeFirstLetter(str: string) {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }

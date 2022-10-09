@@ -1,9 +1,19 @@
-import type { ActionFunction, MetaFunction } from "@remix-run/node";
+import type {
+  ActionFunction,
+  LoaderFunction,
+  MetaFunction,
+} from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
-import { createTask, getAllProjectsUsed, getAllTagsUsed, TaskStatus } from "~/models/task.server";
+import {
+  createTask,
+  getAllProjectsUsed,
+  getAllTagsUsed,
+  TaskStatus,
+} from "~/models/task.server";
 import { TaskModal } from "~/components/taskModal";
 import { useLoaderData } from "@remix-run/react";
+import { composeRedirectUrlWithContext } from "~/utils";
 
 export const meta: MetaFunction = () => {
   return {
@@ -11,14 +21,22 @@ export const meta: MetaFunction = () => {
   };
 };
 
-export async function loader() {
+type LoaderData = Awaited<ReturnType<typeof getLoaderData>>;
 
+async function getLoaderData(url: URL) {
   // TODO move get project and tags to client side
   const tagsList = await getAllTagsUsed();
   const projectList = await getAllProjectsUsed();
+  // use tags present in query for defaults
+  const tagsToPrefill = url?.searchParams?.get("tags");
 
-  return json({ tagsList, projectList });
+  return { tagsList, projectList, tagsToPrefill };
 }
+
+export const loader: LoaderFunction = async ({ request }) => {
+  const url = new URL(request.url);
+  return json<LoaderData>(await getLoaderData(url));
+};
 
 export const action: ActionFunction = async ({ request }) => {
   const body = await request.formData();
@@ -36,11 +54,20 @@ export const action: ActionFunction = async ({ request }) => {
     status: TaskStatus.PENDING,
   });
 
-  return redirect("/tasks");
+  return redirect(
+    composeRedirectUrlWithContext("/tasks", new URL(request.url))
+  );
 };
 
 export default function NewTask() {
-  const data = useLoaderData<typeof loader>();
+  const data = useLoaderData<LoaderData>();
 
-  return <TaskModal actionType="create" availableTags={data.tagsList} availableProjects={data.projectList} />;
+  return (
+    <TaskModal
+      actionType="create"
+      prefillData={{tags: data.tagsToPrefill}}
+      availableTags={data.tagsList}
+      availableProjects={data.projectList}
+    />
+  );
 }

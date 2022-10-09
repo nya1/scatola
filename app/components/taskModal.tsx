@@ -20,7 +20,7 @@ import { capitalizeFirstLetter } from "~/utils";
  */
 export function TaskModal(params: {
   actionType: "create" | "update";
-  prefillData?: SerializeFrom<Task>;
+  prefillData?: SerializeFrom<Partial<Task>>;
   availableTags?: string[];
   availableProjects?: string[];
 }) {
@@ -29,12 +29,12 @@ export function TaskModal(params: {
   const theme = useMantineTheme();
 
   const availableProjects = Array.from(new Set<string>(params?.availableProjects || []));
-  console.log("projects", availableProjects);
+  console.debug("projects", availableProjects);
 
   const preloadedData: string[] = params.prefillData?.tags ? params.prefillData.tags.split(',') : [];
   const availableTags = new Set<string>(params?.availableTags || []);
   
-  console.log("availableTags", availableTags);
+  console.debug("availableTags", availableTags);
   const [tags, setTags] = useState<string[]>(Array.from(availableTags));
   // console.log('before set tags', params.prefillData);
   // if (typeof params.prefillData?.tags === 'string') {
