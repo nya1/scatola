@@ -10,6 +10,7 @@ import {
   updateTask,
 } from "~/models/task.server";
 import { TaskModal } from "~/components/taskModal";
+import { composeRedirectUrlWithContext, getContextFromUrl } from "~/utils";
 
 export async function loader({ request, params }: LoaderArgs) {
   const task = await getTask({ id: params.taskId });
@@ -22,7 +23,9 @@ export async function loader({ request, params }: LoaderArgs) {
 
   const tagsList = await getAllTagsUsed();
 
-  return json({ task, tagsList, projectList });
+  const activeContext = getContextFromUrl(request.url);
+
+  return json({ task, tagsList, projectList, activeContext });
 }
 
 export const meta: MetaFunction<typeof loader> = ({ params }) => {
@@ -49,7 +52,9 @@ export async function action({ request, params }: ActionArgs) {
     scheduled: new Date(body.get("scheduled") as string),
   });
 
-  return redirect("/tasks");
+  return redirect(
+    composeRedirectUrlWithContext("/tasks", new URL(request.url))
+  );
 }
 
 export default function EditTaskPage() {
@@ -61,6 +66,7 @@ export default function EditTaskPage() {
       prefillData={data.task}
       availableTags={data.tagsList}
       availableProjects={data.projectList}
+      activeContext={data.activeContext}
     />
   );
 }

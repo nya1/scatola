@@ -75,13 +75,36 @@ export function validateEmail(email: unknown): email is string {
   return typeof email === "string" && email.length > 3 && email.includes("@");
 }
 
-export function composeRedirectUrlWithContext(newPath: string, originalUrl: URL) {
+export function getContextFromUrl(url: string) {
+  const parsedUrl = new URL(url);
+
+  return parsedUrl.searchParams?.get('context') as string || undefined;
+}
+
+/**
+ * compose a redirect url with whitelisted fields
+ */
+export function composeWhitelistedRedirectUrl(
+  newPath: string,
+  params: {
+    context?: string;
+  }
+) {
   let path = `${newPath}`;
-  const contextToUse = originalUrl.searchParams?.get('context');
-  if (contextToUse) {
-    path += `?context=${contextToUse}`
+  if (params.context) {
+    path += `?context=${params.context}`;
   }
   return path;
+}
+
+export function composeRedirectUrlWithContext(
+  newPath: string,
+  originalUrl: URL
+) {
+  const contextToUse = originalUrl.searchParams?.get("context");
+  return composeWhitelistedRedirectUrl(newPath, {
+    context: contextToUse || undefined,
+  });
 }
 
 export function capitalizeFirstLetter(str: string) {
@@ -99,22 +122,22 @@ export function stringToHslColor(str: string, s: number, l: number) {
 
   var h = hash % 360;
   return "hsl(" + h + ", " + s + "%, " + l + "%)";
-};
+}
 
 // from https://github.com/remix-run/remix/discussions/3313
 export function useTransitionTracking() {
-  const transition = useTransition()
-  const prevState = useRef(transition.state)
+  const transition = useTransition();
+  const prevState = useRef(transition.state);
 
   useEffect(() => {
-    prevState.current = transition.state
-  }, [transition.state])
+    prevState.current = transition.state;
+  }, [transition.state]);
 
   return {
     ...transition,
     stateChangedTo:
-      prevState.current === transition.state ? null : transition.state
-  }
+      prevState.current === transition.state ? null : transition.state,
+  };
 }
 
 // TODO move this server side?
@@ -125,8 +148,7 @@ export function safeMarked(markdownStr: string) {
   return sanitize(marked(markdownStr));
 }
 
-
-export function toHumanReadableDate (dueDate?: string | null) {
+export function toHumanReadableDate(dueDate?: string | null) {
   if (dueDate) {
     const diffToCheck = ["month", "day", "hour"];
     // TODO improve typing
@@ -147,4 +169,4 @@ export function toHumanReadableDate (dueDate?: string | null) {
     }
   }
   return dueDate;
-};
+}

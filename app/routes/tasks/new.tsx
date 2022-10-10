@@ -13,7 +13,7 @@ import {
 } from "~/models/task.server";
 import { TaskModal } from "~/components/taskModal";
 import { useLoaderData } from "@remix-run/react";
-import { composeRedirectUrlWithContext } from "~/utils";
+import { composeRedirectUrlWithContext, getContextFromUrl } from "~/utils";
 
 export const meta: MetaFunction = () => {
   return {
@@ -30,7 +30,9 @@ async function getLoaderData(url: URL) {
   // use tags present in query for defaults
   const tagsToPrefill = url?.searchParams?.get("tags");
 
-  return { tagsList, projectList, tagsToPrefill };
+  const activeContext = getContextFromUrl(url.toString());
+
+  return { tagsList, projectList, tagsToPrefill, activeContext };
 }
 
 export const loader: LoaderFunction = async ({ request }) => {
@@ -68,6 +70,7 @@ export default function NewTask() {
       prefillData={{tags: data.tagsToPrefill}}
       availableTags={data.tagsList}
       availableProjects={data.projectList}
+      activeContext={data.activeContext}
     />
   );
 }

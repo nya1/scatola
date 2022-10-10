@@ -131,12 +131,18 @@ export default function TaskIndexPage() {
 
   // calculates the new task url to use
   // it must contain all tags to be applied and the context (for later redirect)
-  let newTaskUrl = `/tasks/new`;
+  let queryParamsToApply = "";
   if (data.activeContext) {
-    newTaskUrl += `?context=${data.activeContext}`;
-    if (data.tagsOfContext && data.tagsOfContext.length > 0) {
-      newTaskUrl += `&tags=${data.tagsOfContext}`;
-    }
+    queryParamsToApply += `?context=${data.activeContext}`;
+  }
+
+  let newTaskUrl = `/tasks/new${queryParamsToApply}`;
+  if (
+    data.activeContext &&
+    data.tagsOfContext &&
+    data.tagsOfContext.length > 0
+  ) {
+    newTaskUrl += `&tags=${data.tagsOfContext}`;
   }
 
   return (
@@ -332,7 +338,7 @@ export default function TaskIndexPage() {
                 <ActionIcon
                   onClick={(e) => e.stopPropagation()}
                   component={Link}
-                  to={"/tasks/edit/" + row.id}
+                  to={`/tasks/edit/${row.id}${queryParamsToApply}`}
                 >
                   <IconEdit size={16} />
                 </ActionIcon>
@@ -357,7 +363,9 @@ export default function TaskIndexPage() {
               ) : (
                 <Text color={theme.colors.gray[7]}>
                   No description,{" "}
-                  <Link to={"/tasks/edit/" + record.id}>add it</Link>
+                  <Link to={`/tasks/edit/${record.id}${queryParamsToApply}`}>
+                    add it
+                  </Link>
                 </Text>
               )}
             </div>
