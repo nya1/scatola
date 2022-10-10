@@ -1,9 +1,11 @@
 import {
   ActionIcon,
+  Box,
   Button,
   Grid,
   Group,
-  SegmentedControl,
+  MultiSelect,
+  Popover,
   Stack,
   Tabs,
   Text,
@@ -12,31 +14,74 @@ import {
   useMantineTheme,
 } from "@mantine/core";
 import { listTask } from "~/models/task.server";
-import { Link, useLoaderData } from "@remix-run/react";
+import { Form, Link, useLoaderData, useNavigate } from "@remix-run/react";
+import type { LoaderFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { DataTable } from "mantine-datatable";
-import type { QUnitType } from "dayjs";
-import dayjs from "dayjs";
 import { IconEdit, IconPlus, IconSearch } from "@tabler/icons";
 import React, { useEffect, useState } from "react";
 import { useDebouncedValue } from "@mantine/hooks";
 import { CustomBadge } from "~/components/customBadge";
-import { safeMarked } from "~/utils";
+import {
+  capitalizeFirstLetter,
+  safeMarked,
+  toHumanReadableDate,
+  useTransitionTracking,
+} from "~/utils";
+import { listContext } from "~/models/context.server";
+import dayjs from "dayjs";
 
-export async function loader() {
-  const tasks = await listTask();
-  return json({ tasks });
+type LoaderData = Awaited<ReturnType<typeof getLoaderData>>;
+
+async function getLoaderData(queryParams?: URLSearchParams) {
+  const contexts = await listContext();
+  console.debug("contexts", contexts);
+  const activeContext = queryParams?.get("context");
+  console.debug("activeContext", activeContext);
+
+  const rawTags = activeContext
+    ? contexts.find((c) => c.name === activeContext)?.tags
+    : undefined;
+  const tags = rawTags ? rawTags.split(",") : [];
+  console.debug("loaded tags", tags);
+  const tasks = await listTask({ tags });
+
+  return {
+    tasks,
+    activeContext,
+    contexts,
+    tagsOfContext: tags?.join(","),
+  };
 }
+
+export const loader: LoaderFunction = async ({ request }) => {
+  const url = new URL(request.url);
+
+  return json<LoaderData>(await getLoaderData(url.searchParams));
+};
 
 export default function TaskIndexPage() {
   const theme = useMantineTheme();
 
-  const data = useLoaderData<typeof loader>();
+  const data = useLoaderData<LoaderData>();
   const initialRecords = data.tasks;
   const [records, setRecords] = useState(initialRecords);
 
   const [query, setQuery] = useState("");
   const [debouncedQuery] = useDebouncedValue(query, 200);
+
+  const transition = useTransitionTracking();
+
+  const [popoverOpened, setPopoverOpened] = useState(false);
+
+  // TODO make this based on URL change (context query param)
+  // close popover when a new context is created
+  useEffect(() => {
+    if (popoverOpened && transition.stateChangedTo === "loading") {
+      console.debug("context created, closing popover");
+      setPopoverOpened(false);
+    }
+  }, [transition.stateChangedTo, popoverOpened]);
 
   useEffect(() => {
     setRecords(
@@ -60,53 +105,136 @@ export default function TaskIndexPage() {
         return true;
       })
     );
-    // TODO ??
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedQuery]);
+  }, [debouncedQuery, initialRecords]);
 
-  const toHumanReadableDate = (dueDate?: string | null) => {
-    if (dueDate) {
-      const diffToCheck = ["month", "day", "hour"];
-      // TODO improve typing
-      const humanDiffMapping: { [key: string]: string | string[] } = {
-        month: "mth", // TODO support mths
-        day: "d",
-        hour: "hr",
-      };
-      const dueDateObj = dayjs(dueDate);
-      const now = new Date();
-      for (const diff of diffToCheck) {
-        const diffRes = dueDateObj.diff(now, diff as QUnitType);
-        if (diffRes > 0) {
-          const humanSuffix = humanDiffMapping[diff];
-          dueDate = `${diffRes}${humanSuffix}`;
-          break;
-        }
-      }
+  const NEW_CONTEXT_TAB = "____new-context";
+
+  const [activeTab, __setActiveTab] = useState<string | null>(
+    data.activeContext || "all"
+  );
+  const navigate = useNavigate();
+
+  // on tab change update filters to use
+  const setActiveTab = (tabVal: string) => {
+    console.debug("setActiveTab", tabVal);
+    if (tabVal === NEW_CONTEXT_TAB) {
+      return;
     }
-    return dueDate;
+    if (tabVal === "all") {
+      navigate("/tasks");
+      return __setActiveTab(tabVal);
+    }
+
+    navigate("/tasks?context=" + tabVal);
+    __setActiveTab(tabVal);
   };
 
-  const addContext = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  // calculates the new task url to use
+  // it must contain all tags to be applied and the context (for later redirect)
+  let queryParamsToApply = "";
+  if (data.activeContext) {
+    queryParamsToApply += `?context=${data.activeContext}`;
+  }
 
-    window.alert("add new context!");
-  };
+  let newTaskUrl = `/tasks/new${queryParamsToApply}`;
+  if (
+    data.activeContext &&
+    data.tagsOfContext &&
+    data.tagsOfContext.length > 0
+  ) {
+    newTaskUrl += `&tags=${data.tagsOfContext}`;
+  }
 
   return (
     <>
       <Stack align="center">
         {/* TODO make default dynamic based on url (checkout mantine) */}
-        {/* <Tabs color="teal" defaultValue="all">
+        <Tabs
+          color="teal"
+          value={activeTab}
+          onTabChange={setActiveTab}
+          defaultValue="all"
+        >
           <Tabs.List>
             <Tabs.Tab value="all">
               <Text color={theme.colors.blue[7]}>All</Text>
             </Tabs.Tab>
-            <Tabs.Tab value="test" onClickCapture={addContext}>
-              <Text color={theme.colors.gray[7]}>+ Add context</Text>
-            </Tabs.Tab>
+
+            {data.contexts &&
+              data.contexts.map((c, i) => {
+                return (
+                  <Tabs.Tab value={c.name} key={`${c}_${i}`}>
+                    <Text>{capitalizeFirstLetter(c.name)}</Text>
+                  </Tabs.Tab>
+                );
+              })}
+
+            <Popover
+              opened={popoverOpened}
+              width={350}
+              position="bottom"
+              withArrow
+              shadow="md"
+            >
+              <Popover.Target>
+                <Tabs.Tab
+                  value={NEW_CONTEXT_TAB}
+                  onClick={() => setPopoverOpened((o) => !o)}
+                >
+                  <Text
+                    color={
+                      theme.colorScheme === "light"
+                        ? theme.colors.gray[7]
+                        : theme.colors.gray[4]
+                    }
+                  >
+                    + Add context
+                  </Text>
+                </Tabs.Tab>
+              </Popover.Target>
+
+              <Popover.Dropdown>
+                <Box>
+                  <Form method="post" action="/tasks/context">
+                    <TextInput
+                      name="name"
+                      label="Context name"
+                      description="e.g. home or companyx"
+                      pb={8}
+                    />
+
+                    <MultiSelect
+                      name="tags"
+                      label="Tags for this context"
+                      description="used as filters in list view and automatically applied on new tasks"
+                      data={[]}
+                      // value={tags}
+                      clearable
+                      placeholder="Pick or create one or more tags"
+                      searchable
+                      creatable
+                      getCreateLabel={(query) => `+ add ${query}`}
+                      // onCreate={(query) => {
+                      //   setTags((current) => [...current, query]);
+                      //   return query;
+                      // }}
+                      pb={14}
+                      // defaultValue={preloadedData && preloadedData.length > 0 ? preloadedData : undefined}
+                    />
+
+                    <Button
+                      fullWidth
+                      type="submit"
+                      disabled={transition.state === "submitting"}
+                    >
+                      Add
+                    </Button>
+                  </Form>
+                </Box>
+              </Popover.Dropdown>
+            </Popover>
           </Tabs.List>
-        </Tabs> */}
+        </Tabs>
         {/* 
         <SegmentedControl
           data={[
@@ -127,7 +255,7 @@ export default function TaskIndexPage() {
             leftIcon={<IconPlus size={18} />}
             pr={12}
             ml={6}
-            to="/tasks/new"
+            to={newTaskUrl}
           >
             New task
           </Button>
@@ -146,22 +274,19 @@ export default function TaskIndexPage() {
         </Grid.Col>
       </Grid>
 
-      {/* // <Table highlightOnHover>
-    //   <thead>
-    //     <tr>
-    //       <th>Project</th>
-    //       <th>Title</th>
-    //       <th>Due</th>
-    //       <th>Tags</th>
-    //     </tr>
-    //   </thead>
-    //   <tbody>
-    //     {data.tasks.map((t, i) => (
-    //       <TaskRow task={t} key={i} />
-    //     ))}
-    //   </tbody>
-    // </Table> */}
+      {/* <div>
+          {records.map((t, i) => (
+            <div key={"ttt"+i}>{JSON.stringify(t)}</div>
+          ))}
+      </div> */}
+
       <DataTable
+        minHeight={150}
+        emptyState={
+          <div>
+            <Text>No tasks found</Text>
+          </div>
+        }
         highlightOnHover
         // provide data
         records={records}
@@ -213,7 +338,7 @@ export default function TaskIndexPage() {
                 <ActionIcon
                   onClick={(e) => e.stopPropagation()}
                   component={Link}
-                  to={"/tasks/edit/" + row.id}
+                  to={`/tasks/edit/${row.id}${queryParamsToApply}`}
                 >
                   <IconEdit size={16} />
                 </ActionIcon>
@@ -238,7 +363,9 @@ export default function TaskIndexPage() {
               ) : (
                 <Text color={theme.colors.gray[7]}>
                   No description,{" "}
-                  <Link to={"/tasks/edit/" + record.id}>add it</Link>
+                  <Link to={`/tasks/edit/${record.id}${queryParamsToApply}`}>
+                    add it
+                  </Link>
                 </Text>
               )}
             </div>

@@ -1,7 +1,10 @@
-import { useMatches } from "@remix-run/react";
+import { useMatches, useTransition } from "@remix-run/react";
 import { marked } from "marked";
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { sanitize } from "dompurify";
+
+import type { QUnitType } from "dayjs";
+import dayjs from "dayjs";
 
 import type { User } from "~/models/user.server";
 
@@ -72,6 +75,38 @@ export function validateEmail(email: unknown): email is string {
   return typeof email === "string" && email.length > 3 && email.includes("@");
 }
 
+export function getContextFromUrl(url: string) {
+  const parsedUrl = new URL(url);
+
+  return parsedUrl.searchParams?.get('context') as string || undefined;
+}
+
+/**
+ * compose a redirect url with whitelisted fields
+ */
+export function composeWhitelistedRedirectUrl(
+  newPath: string,
+  params: {
+    context?: string;
+  }
+) {
+  let path = `${newPath}`;
+  if (params.context) {
+    path += `?context=${params.context}`;
+  }
+  return path;
+}
+
+export function composeRedirectUrlWithContext(
+  newPath: string,
+  originalUrl: URL
+) {
+  const contextToUse = originalUrl.searchParams?.get("context");
+  return composeWhitelistedRedirectUrl(newPath, {
+    context: contextToUse || undefined,
+  });
+}
+
 export function capitalizeFirstLetter(str: string) {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
@@ -87,7 +122,23 @@ export function stringToHslColor(str: string, s: number, l: number) {
 
   var h = hash % 360;
   return "hsl(" + h + ", " + s + "%, " + l + "%)";
-};
+}
+
+// from https://github.com/remix-run/remix/discussions/3313
+export function useTransitionTracking() {
+  const transition = useTransition();
+  const prevState = useRef(transition.state);
+
+  useEffect(() => {
+    prevState.current = transition.state;
+  }, [transition.state]);
+
+  return {
+    ...transition,
+    stateChangedTo:
+      prevState.current === transition.state ? null : transition.state,
+  };
+}
 
 // TODO move this server side?
 /**
@@ -95,4 +146,27 @@ export function stringToHslColor(str: string, s: number, l: number) {
  */
 export function safeMarked(markdownStr: string) {
   return sanitize(marked(markdownStr));
+}
+
+export function toHumanReadableDate(dueDate?: string | null) {
+  if (dueDate) {
+    const diffToCheck = ["month", "day", "hour"];
+    // TODO improve typing
+    const humanDiffMapping: { [key: string]: string | string[] } = {
+      month: "mth", // TODO support mths
+      day: "d",
+      hour: "hr",
+    };
+    const dueDateObj = dayjs(dueDate);
+    const now = new Date();
+    for (const diff of diffToCheck) {
+      const diffRes = dueDateObj.diff(now, diff as QUnitType);
+      if (diffRes > 0) {
+        const humanSuffix = humanDiffMapping[diff];
+        dueDate = `${diffRes}${humanSuffix}`;
+        break;
+      }
+    }
+  }
+  return dueDate;
 }

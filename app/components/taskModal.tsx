@@ -13,28 +13,37 @@ import type { Task } from "@prisma/client";
 import { Form, useNavigate } from "@remix-run/react";
 import { useState } from "react";
 import type { SerializeFrom } from "@remix-run/server-runtime";
-import { capitalizeFirstLetter } from "~/utils";
+import {
+  capitalizeFirstLetter,
+  composeRedirectUrlWithContext,
+  composeWhitelistedRedirectUrl,
+} from "~/utils";
 
 /**
  * task modal, used for creation and update
  */
 export function TaskModal(params: {
   actionType: "create" | "update";
-  prefillData?: SerializeFrom<Task>;
+  prefillData?: SerializeFrom<Partial<Task>>;
   availableTags?: string[];
   availableProjects?: string[];
+  activeContext?: string;
 }) {
   const navigate = useNavigate();
 
   const theme = useMantineTheme();
 
-  const availableProjects = Array.from(new Set<string>(params?.availableProjects || []));
-  console.log("projects", availableProjects);
+  const availableProjects = Array.from(
+    new Set<string>(params?.availableProjects || [])
+  );
+  console.debug("projects", availableProjects);
 
-  const preloadedData: string[] = params.prefillData?.tags ? params.prefillData.tags.split(',') : [];
+  const preloadedData: string[] = params.prefillData?.tags
+    ? params.prefillData.tags.split(",")
+    : [];
   const availableTags = new Set<string>(params?.availableTags || []);
-  
-  console.log("availableTags", availableTags);
+
+  console.debug("availableTags", availableTags);
   const [tags, setTags] = useState<string[]>(Array.from(availableTags));
   // console.log('before set tags', params.prefillData);
   // if (typeof params.prefillData?.tags === 'string') {
@@ -45,7 +54,9 @@ export function TaskModal(params: {
   const todayYearMonthDay = new Date().toISOString().split("T")[0];
 
   const goBack = () => {
-    navigate("/tasks");
+    navigate(
+      composeWhitelistedRedirectUrl("/tasks", { context: params.activeContext })
+    );
   };
 
   return (
@@ -62,7 +73,7 @@ export function TaskModal(params: {
           (params.actionType === "update" ? " " + params.prefillData?.id : "")
         }
       >
-        <Form method={params.actionType === 'create' ? 'post' : 'put'} replace>
+        <Form method={params.actionType === "create" ? "post" : "put"} replace>
           <Autocomplete
             name="projectName"
             label="Project"
@@ -106,7 +117,11 @@ export function TaskModal(params: {
               return query;
             }}
             pb={14}
-            defaultValue={preloadedData && preloadedData.length > 0 ? preloadedData : undefined}
+            defaultValue={
+              preloadedData && preloadedData.length > 0
+                ? preloadedData
+                : undefined
+            }
           />
           {/* TODO accept also time */}
           <DatePicker
@@ -115,7 +130,11 @@ export function TaskModal(params: {
             allowFreeInput
             placeholder="Optional YYYY/MM/DD"
             label="Scheduled date"
-            defaultValue={params.prefillData?.scheduled ? new Date(params.prefillData?.scheduled) : undefined}
+            defaultValue={
+              params.prefillData?.scheduled
+                ? new Date(params.prefillData?.scheduled)
+                : undefined
+            }
             renderDay={(date) => {
               const inputDateYearMonthDate = date.toISOString().split("T")[0];
               return todayYearMonthDay === inputDateYearMonthDate ? (
@@ -144,7 +163,11 @@ export function TaskModal(params: {
             allowFreeInput
             placeholder="Optional YYYY/MM/DD"
             label="Due date"
-            defaultValue={params.prefillData?.due ? new Date(params.prefillData?.due) : undefined}
+            defaultValue={
+              params.prefillData?.due
+                ? new Date(params.prefillData?.due)
+                : undefined
+            }
             renderDay={(date) => {
               const inputDateYearMonthDate = date.toISOString().split("T")[0];
               return todayYearMonthDay === inputDateYearMonthDate ? (
@@ -168,7 +191,9 @@ export function TaskModal(params: {
           />
 
           <Center>
-            <Button type="submit">{capitalizeFirstLetter(params.actionType)}</Button>
+            <Button type="submit">
+              {capitalizeFirstLetter(params.actionType)}
+            </Button>
           </Center>
         </Form>
       </Modal>
