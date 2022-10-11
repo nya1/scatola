@@ -361,7 +361,7 @@ export default function TaskIndexPage() {
                   }}
                 />
               ) : (
-                <Text color={theme.colors.gray[7]}>
+                <Text align="center" color={theme.colors.gray[7]}>
                   No description,{" "}
                   <Link to={`/tasks/edit/${record.id}${queryParamsToApply}`}>
                     add it

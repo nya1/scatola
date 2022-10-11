@@ -75,10 +75,24 @@ export function validateEmail(email: unknown): email is string {
   return typeof email === "string" && email.length > 3 && email.includes("@");
 }
 
-export function getContextFromUrl(url: string) {
-  const parsedUrl = new URL(url);
+function __safeGetQueryParam(parsedUrl: URL, queryParam: string): string | undefined {
+  return parsedUrl?.searchParams?.get(queryParam) || undefined;
+}
 
-  return parsedUrl.searchParams?.get('context') as string || undefined;
+/**
+ * extract known fields from query params
+ */
+export function getQueryParams(url: string) {
+  const parsedUrl = new URL(url);
+  return {
+    activeContext: __safeGetQueryParam(parsedUrl, "activeContext"),
+    tags: __safeGetQueryParam(parsedUrl, "tags"),
+    type: __safeGetQueryParam(parsedUrl, "type"),
+  }
+}
+
+export function getContextFromUrl(url: string) {
+  return getQueryParams(url).activeContext;
 }
 
 /**

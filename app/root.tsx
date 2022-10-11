@@ -7,16 +7,25 @@ import {
   Scripts,
   ScrollRestoration,
 } from "@remix-run/react";
-import type {
-  ColorScheme} from "@mantine/core";
+import {
+  Text,
+  ActionIcon,
+  ColorScheme,
+  Grid,
+  Group,
+  Header,
+  useMantineTheme,
+} from "@mantine/core";
 import {
   MantineProvider,
   createEmotionCache,
-  ColorSchemeProvider
+  ColorSchemeProvider,
 } from "@mantine/core";
 import { StylesPlaceholder } from "@mantine/remix";
 
 import { useLocalStorage } from "@mantine/hooks";
+import { IconBox, IconSun, IconMoonStars } from "@tabler/icons";
+import { ImportButtonMenu } from "./routes/tasks/importButton";
 
 export const meta: MetaFunction = () => ({
   charset: "utf-8",
@@ -37,6 +46,11 @@ export default function App() {
   const toggleColorScheme = (value?: ColorScheme) =>
     setColorScheme(value || (colorScheme === "dark" ? "light" : "dark"));
 
+  const theme = useMantineTheme();
+
+  const logoColor =
+    colorScheme === "light" ? theme.colors.gray[9] : theme.colors.gray[2];
+
   return (
     <html lang="en">
       <head>
@@ -54,8 +68,50 @@ export default function App() {
             withGlobalStyles
             theme={{ colorScheme }}
           >
-            {/* https://github.com/franck-boucher/mantine-stack/blob/700b798172a8dd77b3350e56d3016eba9681dde6/app/root.tsx#L3 */}
-            {/* <GlobalStyles /> */}
+            <Header height={54}>
+              <Grid align="center" justify="space-between">
+                <Grid.Col span={3}>
+                  <Group spacing={2}>
+                    <ActionIcon size="xl">
+                      <IconBox size={50} color={logoColor} />
+                    </ActionIcon>
+                    <Text
+                      color={logoColor}
+                      weight={500}
+                      style={{ fontFamily: theme.fontFamilyMonospace }}
+                    >
+                      scatola
+                    </Text>
+                  </Group>
+                </Grid.Col>
+                <Grid.Col span="auto">
+                  <Group position="right">
+                    <ImportButtonMenu />
+                    <ActionIcon
+                      onClick={() => toggleColorScheme()}
+                      size="lg"
+                      sx={(theme) => ({
+                        backgroundColor:
+                          theme.colorScheme === "dark"
+                            ? theme.colors.dark[6]
+                            : theme.colors.gray[0],
+                        color:
+                          theme.colorScheme === "dark"
+                            ? theme.colors.yellow[4]
+                            : theme.colors.blue[6],
+                      })}
+                    >
+                      {colorScheme === "dark" ? (
+                        <IconSun size={18} />
+                      ) : (
+                        <IconMoonStars size={18} />
+                      )}
+                    </ActionIcon>
+                  </Group>
+                </Grid.Col>
+              </Grid>
+            </Header>
+
             <Outlet />
           </MantineProvider>
         </ColorSchemeProvider>
