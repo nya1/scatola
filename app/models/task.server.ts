@@ -115,6 +115,10 @@ export function createTask(
   });
 }
 
+export async function __rawCreateTask(data: Prisma.TaskCreateInput) {
+  return prisma.task.create({data});
+}
+
 export function updateTask(
   id: string,
   params: Partial<Omit<Task, "id" | "createdAt" | "updatedAt">>

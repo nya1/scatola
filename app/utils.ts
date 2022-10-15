@@ -7,6 +7,7 @@ import type { QUnitType } from "dayjs";
 import dayjs from "dayjs";
 
 import type { User } from "~/models/user.server";
+import { z } from "zod";
 
 const DEFAULT_REDIRECT = "/";
 
@@ -75,7 +76,10 @@ export function validateEmail(email: unknown): email is string {
   return typeof email === "string" && email.length > 3 && email.includes("@");
 }
 
-function __safeGetQueryParam(parsedUrl: URL, queryParam: string): string | undefined {
+function __safeGetQueryParam(
+  parsedUrl: URL,
+  queryParam: string
+): string | undefined {
   return parsedUrl?.searchParams?.get(queryParam) || undefined;
 }
 
@@ -88,7 +92,7 @@ export function getQueryParams(url: string) {
     activeContext: __safeGetQueryParam(parsedUrl, "activeContext"),
     tags: __safeGetQueryParam(parsedUrl, "tags"),
     type: __safeGetQueryParam(parsedUrl, "type"),
-  }
+  };
 }
 
 export function getContextFromUrl(url: string) {
@@ -164,6 +168,7 @@ export function safeMarked(markdownStr: string) {
 
 export function toHumanReadableDate(dueDate?: string | null) {
   if (dueDate) {
+    const originalDueDate = dueDate;
     const diffToCheck = ["month", "day", "hour"];
     // TODO improve typing
     const humanDiffMapping: { [key: string]: string | string[] } = {
@@ -181,6 +186,42 @@ export function toHumanReadableDate(dueDate?: string | null) {
         break;
       }
     }
+    // unablet to find a human readable compatible diff, display only iso date
+    if (originalDueDate === dueDate) {
+      dueDate = dayjs(originalDueDate).format(`YYYY-MM-DD`);
+    }
   }
   return dueDate;
 }
+
+// from https://gist.github.com/fnky/7fe414b402baf5c9ba8f7ddecfdd263e
+// This type infer errors from a ZodType, as produced by `flatten()` of a parsed schema.
+export type InferSafeParseErrors<
+  T extends z.ZodType<any, any, any>,
+  U = string
+> = {
+  formErrors: U[];
+  fieldErrors: {
+    [P in keyof z.infer<T>]?: U[];
+  };
+};
+
+export function getFormDataFieldsAsObject<R extends {[key: string]: unknown}>(
+  formData: FormData,
+  fields: (keyof R)[] // TODO improve fields typing
+) {
+  const wrapperObj: { [field: string]: unknown } = {};
+  
+  for (const field of fields) {
+    const fieldStr = field as string;
+    const formVal = formData?.get(fieldStr);
+    // empty strings will be automatically converted to undefined
+    wrapperObj[fieldStr] = formVal === '' ? undefined : formVal;
+  }
+  
+  return wrapperObj;
+}
+
+export const projectMatches = (fullProjectNameSettings: string, compareTo: string): boolean => {
+  return new RegExp('^' + fullProjectNameSettings.replace(/\*/g, '.*') + '$').test(compareTo)
+};

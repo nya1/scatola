@@ -1,5 +1,4 @@
 import { PrismaClient } from "@prisma/client";
-import { fieldEncryptionMiddleware } from 'prisma-field-encryption'
 
 let prisma: PrismaClient;
 
@@ -20,8 +19,5 @@ if (process.env.NODE_ENV === "production") {
   prisma = global.__db__;
   prisma.$connect();
 }
-
-// add encryption middleware
-prisma.$use(fieldEncryptionMiddleware())
 
 export { prisma };

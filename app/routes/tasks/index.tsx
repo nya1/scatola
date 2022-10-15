@@ -1,7 +1,9 @@
 import {
   ActionIcon,
+  Anchor,
   Box,
   Button,
+  Center,
   Grid,
   Group,
   MultiSelect,
@@ -18,7 +20,7 @@ import { Form, Link, useLoaderData, useNavigate } from "@remix-run/react";
 import type { LoaderFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { DataTable } from "mantine-datatable";
-import { IconEdit, IconPlus, IconSearch } from "@tabler/icons";
+import { IconBrandGitlab, IconEdit, IconPlus, IconSearch } from "@tabler/icons";
 import React, { useEffect, useState } from "react";
 import { useDebouncedValue } from "@mantine/hooks";
 import { CustomBadge } from "~/components/customBadge";
@@ -30,6 +32,7 @@ import {
 } from "~/utils";
 import { listContext } from "~/models/context.server";
 import dayjs from "dayjs";
+import { SourceTypeEnum } from "~/models/source/dto/newSource.server";
 
 type LoaderData = Awaited<ReturnType<typeof getLoaderData>>;
 
@@ -45,7 +48,7 @@ async function getLoaderData(queryParams?: URLSearchParams) {
   const tags = rawTags ? rawTags.split(",") : [];
   console.debug("loaded tags", tags);
   const tasks = await listTask({ tags });
-
+  console.debug("tasks", tasks);
   return {
     tasks,
     activeContext,
@@ -148,7 +151,6 @@ export default function TaskIndexPage() {
   return (
     <>
       <Stack align="center">
-        {/* TODO make default dynamic based on url (checkout mantine) */}
         <Tabs
           color="teal"
           value={activeTab}
@@ -294,12 +296,53 @@ export default function TaskIndexPage() {
         // TODO improve typing using original Task type
         // TODO add sorting
         columns={[
-          { accessor: "projectName" },
+          {
+            accessor: "projectName",
+            render: ({ projectName, webUrl, fromSource }) => {
+              if (fromSource) {
+                if (fromSource.type === "gitlab") {
+                  return (
+                    <Anchor href={webUrl!} target="_blank">
+                      <Center inline>
+                        <IconBrandGitlab size={20} />
+                        <Text ml={5}>{projectName}</Text>
+                      </Center>
+                    </Anchor>
+                  );
+                  //                   const iconWithText = (
+                  //                     <>
+                  //                       <Grid.Col>
+                  //                         <IconBrandGitlab size={20} />
+                  //                       </Grid.Col>
+                  //                       <Grid.Col>
+                  //                         <span>{projectName}</span>
+                  // </Grid.Col>                    </>
+                  //                   );
+                  //                   return (
+                  //                     <Grid>
+                  //                       {webUrl ? (
+                  //                         <Anchor href={webUrl}>{iconWithText}</Anchor>
+                  //                       ) : (
+                  //                         iconWithText
+                  //                       )}
+                  //                     <Grid>
+                  //                   );
+                }
+              }
+              return <span>{projectName}</span>;
+            },
+          },
           {
             accessor: "scheduled",
             title: "Sched.",
             width: 80,
-            render: ({ scheduled }) => toHumanReadableDate(scheduled),
+            render: ({ scheduled }) => {
+              return (
+                <Tooltip label={dayjs(scheduled).format("ddd D MMM YYYY")}>
+                  <span>{toHumanReadableDate(scheduled)}</span>
+                </Tooltip>
+              );
+            },
             textAlignment: "center",
           },
           {
@@ -307,7 +350,7 @@ export default function TaskIndexPage() {
             width: 80,
             render: ({ due }) => {
               return (
-                <Tooltip label={dayjs(due!).format("ddd D MMM YYYY")}>
+                <Tooltip label={dayjs(due).format("ddd D MMM YYYY")}>
                   <span>{toHumanReadableDate(due)}</span>
                 </Tooltip>
               );

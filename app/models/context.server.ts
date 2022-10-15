@@ -13,11 +13,11 @@ export async function createContext(name: string, tags: string) {
   });
 }
 
-export async function listContext() {
+export async function listContext(selectTags = true) {
   return prisma.context.findMany({
     select: {
       name: true,
-      tags: true,
+      tags: selectTags,
     }
   });
 }

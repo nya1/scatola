@@ -2,40 +2,106 @@ import {
   Text,
   Modal,
   PasswordInput,
-  TextInput,
   Box,
   MultiSelect,
+  Button,
+  RangeSlider,
+  Select,
+  SegmentedControl,
+  useMantineTheme,
 } from "@mantine/core";
 import { DatePicker } from "@mantine/dates";
-import { json, LoaderArgs } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
+import { ActionFunction, json, LoaderArgs, redirect } from "@remix-run/node";
+import { Form, useLoaderData, useTransition } from "@remix-run/react";
 import { useState } from "react";
 import invariant from "tiny-invariant";
-import { capitalizeFirstLetter, getQueryParams } from "~/utils";
+import { listContext } from "~/models/context.server";
+import {
+  GitlabSettingsType,
+  NewSource,
+  NewSourceType,
+  SourceImportType,
+} from "~/models/source/dto/newSource.server";
+import {
+  createSource,
+  getSource,
+  listSource,
+} from "~/models/source/source.server";
+import {
+  capitalizeFirstLetter,
+  getFormDataFieldsAsObject,
+  getQueryParams,
+} from "~/utils";
 
 export async function loader({ request, params }: LoaderArgs) {
   const queryParams = getQueryParams(request.url);
   invariant(typeof queryParams.type === "string", "expected a type");
   console.debug("queryParams", queryParams);
-  return json({ ...queryParams });
+
+  // TODO move to client side?
+  const contextList = await listContext(false);
+
+  // TODO load active context
+
+  return json({ ...queryParams, contextList });
 }
+
+export const action: ActionFunction = async ({ request }) => {
+  const formData = await request.formData();
+
+  // const fields = Object.fromEntries(formData.entries()) as NewSourceType;
+  const formSettings = getFormDataFieldsAsObject<GitlabSettingsType>(formData, [
+    "personalAccessToken",
+    "createdAfter",
+    "projectLocationList",
+    "state",
+  ]);
+  const type = formData.get("type");
+  const defaultContextToUse = formData.get("defaultContextToUse");
+  console.debug("type, formSettings", type, formSettings);
+  const result = NewSource.safeParse({
+    type,
+    defaultContextToUse,
+    settings: formSettings,
+  });
+  console.debug("result", result);
+  if (!result.success) {
+    return json(
+      {
+        errors: result.error.flatten(),
+      },
+      {
+        status: 400,
+      }
+    );
+  }
+
+  const newSource = await createSource({
+    ...result.data,
+    importType: SourceImportType.Enum.pull,
+    defaultContextToUse: result.data.defaultContextToUse || null,
+  });
+  console.debug("newSource", newSource);
+
+  const lists = await listSource();
+  console.log("LIST SOURCE AFTER", lists);
+
+  return redirect("/tasks");
+};
 
 /**
  * modal content dedicated to gitlab import
  */
 function GitlabImport() {
-  const [usernameList, setUsernameList] = useState<string[]>([]);
+  const theme = useMantineTheme();
 
   const [projectList, setProjectList] = useState<string[]>([]);
 
-  const stateListAvailable = ["opened", "closed"];
-  const [stateList, setStateList] = useState<string[]>(["opened", "closed"]);
-
   return (
     <Box>
-      <Text size="lg" weight="500" mb="xl">Gitlab</Text>
+      <input type="hidden" name="type" value="gitlab" />
 
-      <Text mb="sm">Security</Text>
+      <Text mt="sm">Security</Text>
       <PasswordInput
         name="personalAccessToken"
         placeholder="Personal access token, e.g. glpat-************"
@@ -44,52 +110,23 @@ function GitlabImport() {
         withAsterisk
       />
 
-      <Text my="sm" mt="xl">Settings</Text>
+      <Text mt="sm">Settings</Text>
 
       <MultiSelect
-        pb="sm"
-        name="createdByList"
-        label="Created by (usernames)"
-        data={usernameList}
-        description="Only the issues created by these users will be imported"
-        searchable
-        creatable
-        getCreateLabel={(query) => {
-          const cleanQuery = query.replace(/@/g, '');
-          return `+ Add: ${cleanQuery}`
-        }}
-        onCreate={(query) => {
-          const cleanQuery = query.replace(/@/g, '');
-          if (!cleanQuery) {
-            return null;
-          }
-          setUsernameList((curr) => [...curr, cleanQuery]);
-          return cleanQuery;
-        }}
-      />
-
-      <DatePicker
-        name="createdAfter"
-        description="Import only the issues that were created after this date"
-        placeholder="Pick date"
-        label="Minimum created date"
-        pb="sm"
-      />
-
-      <MultiSelect
+        withAsterisk
         pb="sm"
         name="projectLocationList"
         label="Project location list (<username or group>/<project name>)"
         data={projectList}
-        description="List of projects included the group or username (e.g. fdroid/fdroidclient)"
+        description="List of projects including the group or username (e.g. fdroid/fdroidclient), project wildcard supported"
         searchable
         creatable
         getCreateLabel={(query) => {
           const querySplit = query?.split("/");
 
           return querySplit.length === 2 && querySplit[1].length > 0
-            ? `+ Create ${query}`
-            : "Note: add a / followed by the project name (e.g. dwt1/dotfiles)";
+            ? `+ Add: ${query}`
+            : "Note: add a / followed by the project name (e.g. dwt1/dotfiles) or wildcard (*)";
         }}
         onCreate={(query) => {
           if (query.includes("/") === false) {
@@ -100,14 +137,28 @@ function GitlabImport() {
         }}
       />
 
-      <MultiSelect
+      <DatePicker
+        name="createdAfter"
+        description="Import only the issues that were created after this date"
+        placeholder="Pick date"
+        label="Minimum created date"
         pb="sm"
-        name="stateList"
-        label="State list"
-        value={stateList}
-        data={stateListAvailable}
-        description="issues with one of the state selected will be imported"
-        onChange={setStateList}
+        inputFormat="YYYY-MM-DD"
+      />
+
+      <Text mt="sm">State</Text>
+      <Text size="xs" color={theme.colors.gray[6]}>
+        Import only issues with the following state
+      </Text>
+
+      <SegmentedControl
+        name="state"
+        defaultValue="all"
+        data={[
+          { label: "All", value: "all" },
+          { label: "Opened", value: "opened" },
+          { label: "Closed", value: "closed" },
+        ]}
       />
     </Box>
   );
@@ -115,6 +166,8 @@ function GitlabImport() {
 
 export default function ImportTickets() {
   const data = useLoaderData<typeof loader>();
+
+  const transition = useTransition();
 
   const [opened, setOpened] = useState(true);
 
@@ -127,7 +180,44 @@ export default function ImportTickets() {
         onClose={() => setOpened(false)}
         title={`Add new source`}
       >
-        {data.type === "gitlab" && <GitlabImport />}
+        <Form method="post">
+          <Text size="lg" weight="500" my="md">
+            {capitalizeFirstLetter(data.type!)}
+          </Text>
+
+          <Select
+            name="defaultContextToUse"
+            label="Context"
+            description="issues will be imported to the selected context"
+            data={data.contextList.map((v) => v.name)}
+          />
+
+          {data.type === "gitlab" && <GitlabImport />}
+
+          {/* 
+          <Text mt="md" size="sm">
+            Refresh rate
+          </Text>
+          <RangeSlider
+            label={(value) => `${value} seconds`}
+            labelAlwaysOn
+            size={3}
+            thumbSize={14}
+            min={5}
+            max={300}
+            mt="sm"
+            defaultValue={[60, 90]}
+          /> */}
+
+          <Button
+            disabled={transition.state === "submitting"}
+            mt="lg"
+            type="submit"
+            fullWidth
+          >
+            Create
+          </Button>
+        </Form>
       </Modal>
     </>
   );
