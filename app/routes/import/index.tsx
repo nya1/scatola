@@ -5,28 +5,23 @@ import {
   Box,
   MultiSelect,
   Button,
-  RangeSlider,
   Select,
   SegmentedControl,
   useMantineTheme,
 } from "@mantine/core";
 import { DatePicker } from "@mantine/dates";
-import { ActionFunction, json, LoaderArgs, redirect } from "@remix-run/node";
+import type { ActionFunction, LoaderArgs } from "@remix-run/node";
+import { json, redirect } from "@remix-run/node";
 import { Form, useLoaderData, useTransition } from "@remix-run/react";
 import { useState } from "react";
 import invariant from "tiny-invariant";
 import { listContext } from "~/models/context.server";
+import type { GitlabSettingsType } from "~/models/source/dto/newSource.server";
 import {
-  GitlabSettingsType,
   NewSource,
-  NewSourceType,
   SourceImportType,
 } from "~/models/source/dto/newSource.server";
-import {
-  createSource,
-  getSource,
-  listSource,
-} from "~/models/source/source.server";
+import { createSource, listSource } from "~/models/source/source.server";
 import {
   capitalizeFirstLetter,
   getFormDataFieldsAsObject,
