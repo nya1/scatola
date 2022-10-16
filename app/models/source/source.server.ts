@@ -1,7 +1,7 @@
 import type { Context, Prisma, Source, Task } from "@prisma/client";
-import { cryptr } from "~/crypt.server";
+import { cryptr } from "../../crypt.server";
 
-import { prisma } from "~/db.server";
+import { prisma } from "../../db.server";
 
 export type { Source } from "@prisma/client";
 

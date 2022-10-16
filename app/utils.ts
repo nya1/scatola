@@ -6,8 +6,8 @@ import { sanitize } from "dompurify";
 import type { QUnitType } from "dayjs";
 import dayjs from "dayjs";
 
-import type { User } from "~/models/user.server";
-import { z } from "zod";
+import type { User } from "./models/user.server";
+import type { z } from "zod";
 
 const DEFAULT_REDIRECT = "/";
 

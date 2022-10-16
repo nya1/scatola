@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { InferSafeParseErrors } from "~/utils";
+import type { InferSafeParseErrors } from "../../../utils";
 import dayjs from "dayjs";
 
 export const SourceImportType = z.enum(["pull", "webhook", "pullAndWebhook"]);

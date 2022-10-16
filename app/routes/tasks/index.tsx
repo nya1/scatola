@@ -15,7 +15,7 @@ import {
   Tooltip,
   useMantineTheme,
 } from "@mantine/core";
-import { listTask } from "~/models/task.server";
+import { listTask } from "../../models/task.server";
 import { Form, Link, useLoaderData, useNavigate } from "@remix-run/react";
 import type { LoaderFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
@@ -23,16 +23,15 @@ import { DataTable } from "mantine-datatable";
 import { IconBrandGitlab, IconEdit, IconPlus, IconSearch } from "@tabler/icons";
 import React, { useEffect, useState } from "react";
 import { useDebouncedValue } from "@mantine/hooks";
-import { CustomBadge } from "~/components/customBadge";
+import { CustomBadge } from "../../components/customBadge";
 import {
   capitalizeFirstLetter,
   safeMarked,
   toHumanReadableDate,
   useTransitionTracking,
-} from "~/utils";
-import { listContext } from "~/models/context.server";
+} from "../../utils";
+import { listContext } from "../../models/context.server";
 import dayjs from "dayjs";
-import { SourceTypeEnum } from "~/models/source/dto/newSource.server";
 
 type LoaderData = Awaited<ReturnType<typeof getLoaderData>>;
 

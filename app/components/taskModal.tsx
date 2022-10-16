@@ -17,7 +17,7 @@ import {
   capitalizeFirstLetter,
   composeRedirectUrlWithContext,
   composeWhitelistedRedirectUrl,
-} from "~/utils";
+} from "../utils";
 
 /**
  * task modal, used for creation and update

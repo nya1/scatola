@@ -2,10 +2,10 @@ import type { Source } from "@prisma/client";
 import { ImportBaseClass } from "../base";
 
 import type { Prisma } from "@prisma/client";
-import type { GitlabSettingsType } from "~/models/source/dto/newSource.server";
-import { SourceTypeEnum } from "~/models/source/dto/newSource.server";
+import type { GitlabSettingsType } from "../../models/source/dto/newSource.server";
+import { SourceTypeEnum } from "../../models/source/dto/newSource.server";
 import dayjs from "dayjs";
-import { projectMatches } from "~/utils";
+import { projectMatches } from "../../utils";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime";
 
 export function getUpstreamRef(type: string, issue: any) {

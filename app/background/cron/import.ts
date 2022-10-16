@@ -1,9 +1,9 @@
 import { CronJob } from "cron";
-import type { GitlabSettingsType } from "~/models/source/dto/newSource.server";
-import { SourceTypeEnum } from "~/models/source/dto/newSource.server";
-import { decodeSettings, listSource } from "~/models/source/source.server";
+import type { GitlabSettingsType } from "../../models/source/dto/newSource.server";
+import { SourceTypeEnum } from "../../models/source/dto/newSource.server";
+import { decodeSettings, listSource } from "../../models/source/source.server";
 import dayjs from "dayjs";
-import { GitlabPlugin } from "~/import";
+import { GitlabPlugin } from "../../import";
 
 // TODO generalize the importing creating an abstract class that will be implemented by "plugins"
 

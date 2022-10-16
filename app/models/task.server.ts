@@ -7,7 +7,7 @@ import type {
   PrismaPromise,
 } from "@prisma/client";
 
-import { prisma } from "~/db.server";
+import { prisma } from "../db.server";
 
 // TODO restrict selected fields on fromSource
 export type TaskWithSource = Task & {

@@ -1,5 +1,5 @@
 import type { Prisma, Source } from "@prisma/client";
-import { __rawCreateTask } from "~/models/task.server";
+import { __rawCreateTask } from "../models/task.server";
 
 /**
  * for each plugin extend this class and implement methods

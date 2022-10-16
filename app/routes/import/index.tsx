@@ -15,18 +15,18 @@ import { json, redirect } from "@remix-run/node";
 import { Form, useLoaderData, useTransition } from "@remix-run/react";
 import { useState } from "react";
 import invariant from "tiny-invariant";
-import { listContext } from "~/models/context.server";
-import type { GitlabSettingsType } from "~/models/source/dto/newSource.server";
+import { listContext } from "../../models/context.server";
+import type { GitlabSettingsType } from "../../models/source/dto/newSource.server";
 import {
   NewSource,
   SourceImportType,
-} from "~/models/source/dto/newSource.server";
-import { createSource, listSource } from "~/models/source/source.server";
+} from "../../models/source/dto/newSource.server";
+import { createSource, listSource } from "../../models/source/source.server";
 import {
   capitalizeFirstLetter,
   getFormDataFieldsAsObject,
   getQueryParams,
-} from "~/utils";
+} from "../../utils";
 
 export async function loader({ request, params }: LoaderArgs) {
   const queryParams = getQueryParams(request.url);

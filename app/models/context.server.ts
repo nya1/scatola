@@ -1,6 +1,4 @@
-import type { Context } from "@prisma/client";
-
-import { prisma } from "~/db.server";
+import { prisma } from "../db.server";
 
 export type { Context } from "@prisma/client";
 
