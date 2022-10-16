@@ -8,9 +8,9 @@ import {
   getAllTagsUsed,
   getTask,
   updateTask,
-} from "~/models/task.server";
-import { TaskModal } from "~/components/taskModal";
-import { composeRedirectUrlWithContext, getContextFromUrl } from "~/utils";
+} from "../../../models/task.server";
+import { TaskModal } from "../../../components/taskModal";
+import { composeRedirectUrlWithContext, getContextFromUrl } from "../../../utils";
 
 export async function loader({ request, params }: LoaderArgs) {
   const task = await getTask({ id: params.taskId });

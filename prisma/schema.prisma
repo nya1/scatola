@@ -51,9 +51,9 @@ model Source {
   // - pullAndWebhook
   importType String
 
-  // encrypted json, used to store keys/tokens to access the source
-  // it needs decryption and decoding (json parse) handled by prisma middleware
-  authData String /// @encrypted
+  // encrypted json, depends on type in use
+  // contains auth data (e.g. token) and other source-related settings
+  settings String /// @encrypted?mode=strict
 
   // default context to use for imported tasks
   defaultContextToUse String?
@@ -64,21 +64,22 @@ model Source {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  context Context? @relation(fields: [defaultContextToUse], references: [name])
+
   Task Task[]
 }
 
 // default tags to use in filtering the view and during task creation
 model Context {
-  id         String  @id @default(cuid())
+  name String @id @unique
 
-  name String
-
-  tags String
+  tags   String
+  Source Source[]
 }
 
 model Task {
-  id         String  @id @default(cuid())
-  projectName    String?
+  id          String  @id @default(cuid())
+  projectName String?
 
   // status of task
   // pending = still working on the task
@@ -86,12 +87,12 @@ model Task {
   // completed = task successfully completed
   // deleted = task deleted because it's no longer relevant
   status String @default("pending")
-  
+
   // external url for this task, can be used when
   // the task is imported from an external source
   webUrl String?
-  
-  title      String
+
+  title String
 
   // markdown supported
   description String?

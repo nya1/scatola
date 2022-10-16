@@ -7,7 +7,7 @@ import type {
   PrismaPromise,
 } from "@prisma/client";
 
-import { prisma } from "~/db.server";
+import { prisma } from "../db.server";
 
 // TODO restrict selected fields on fromSource
 export type TaskWithSource = Task & {
@@ -113,6 +113,10 @@ export function createTask(
   return prisma.task.create({
     data: taskToCreate,
   });
+}
+
+export async function __rawCreateTask(data: Prisma.TaskCreateInput) {
+  return prisma.task.create({data});
 }
 
 export function updateTask(

@@ -10,10 +10,10 @@ import {
   getAllProjectsUsed,
   getAllTagsUsed,
   TaskStatus,
-} from "~/models/task.server";
-import { TaskModal } from "~/components/taskModal";
+} from "../../models/task.server";
+import { TaskModal } from "../../components/taskModal";
 import { useLoaderData } from "@remix-run/react";
-import { composeRedirectUrlWithContext, getContextFromUrl } from "~/utils";
+import { composeRedirectUrlWithContext, getContextFromUrl } from "../../utils";
 
 export const meta: MetaFunction = () => {
   return {

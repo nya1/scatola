@@ -1,6 +1,6 @@
 import { useMantineTheme } from "@mantine/core";
 import React from "react";
-import { stringToHslColor } from "~/utils";
+import { stringToHslColor } from "../utils";
 
 /**
  * render custom badge with color based on the tag provided
