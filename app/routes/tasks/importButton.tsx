@@ -20,7 +20,7 @@ export function ImportButtonMenu() {
             rightIcon={<IconChevronDown size={18} stroke={1.5} />}
             pr={12}
           >
-            Sync tickets
+            Import tickets
           </Button>
         </Menu.Target>
 

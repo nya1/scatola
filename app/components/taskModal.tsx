@@ -13,11 +13,7 @@ import type { Task } from "@prisma/client";
 import { Form, useNavigate } from "@remix-run/react";
 import { useState } from "react";
 import type { SerializeFrom } from "@remix-run/server-runtime";
-import {
-  capitalizeFirstLetter,
-  composeRedirectUrlWithContext,
-  composeWhitelistedRedirectUrl,
-} from "../utils";
+import { capitalizeFirstLetter, composeWhitelistedRedirectUrl } from "../utils";
 
 /**
  * task modal, used for creation and update
@@ -41,7 +37,10 @@ export function TaskModal(params: {
   const preloadedData: string[] = params.prefillData?.tags
     ? params.prefillData.tags.split(",")
     : [];
-  const availableTags = new Set<string>(params?.availableTags || []);
+  const availableTags = new Set<string>([
+    ...(params?.availableTags || []),
+    ...preloadedData,
+  ]);
 
   console.debug("availableTags", availableTags);
   const [tags, setTags] = useState<string[]>(Array.from(availableTags));

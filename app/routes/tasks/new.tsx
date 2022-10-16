@@ -13,7 +13,7 @@ import {
 } from "../../models/task.server";
 import { TaskModal } from "../../components/taskModal";
 import { useLoaderData } from "@remix-run/react";
-import { composeRedirectUrlWithContext, getContextFromUrl } from "../../utils";
+import { composeRedirectUrlWithContext, getContextFromUrl, getQueryParams } from "../../utils";
 
 export const meta: MetaFunction = () => {
   return {
@@ -23,21 +23,22 @@ export const meta: MetaFunction = () => {
 
 type LoaderData = Awaited<ReturnType<typeof getLoaderData>>;
 
-async function getLoaderData(url: URL) {
+async function getLoaderData(url: string) {
   // TODO move get project and tags to client side
   const tagsList = await getAllTagsUsed();
   const projectList = await getAllProjectsUsed();
-  // use tags present in query for defaults
-  const tagsToPrefill = url?.searchParams?.get("tags");
+  const queryParams = getQueryParams(url);
+  console.debug(`queryParams`, queryParams);
 
-  const activeContext = getContextFromUrl(url.toString());
+  // use tags present in query for defaults
+  const tagsToPrefill = queryParams.tags;
+  const activeContext = queryParams.activeContext;
 
   return { tagsList, projectList, tagsToPrefill, activeContext };
 }
 
 export const loader: LoaderFunction = async ({ request }) => {
-  const url = new URL(request.url);
-  return json<LoaderData>(await getLoaderData(url));
+  return json<LoaderData>(await getLoaderData(request.url));
 };
 
 export const action: ActionFunction = async ({ request }) => {
