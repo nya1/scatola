@@ -28,7 +28,6 @@ async function getLoaderData(url: string) {
   const tagsList = await getAllTagsUsed();
   const projectList = await getAllProjectsUsed();
   const queryParams = getQueryParams(url);
-  console.debug(`queryParams`, queryParams);
 
   // use tags present in query for defaults
   const tagsToPrefill = queryParams.tags;

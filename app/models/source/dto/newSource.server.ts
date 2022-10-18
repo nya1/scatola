@@ -27,6 +27,13 @@ export type GitlabSettingsType = z.infer<typeof GitlabSettings>;
 
 export const NewSource = z.object({
   type: SourceTypeEnum,
+  baseUrl: z
+    .string()
+    .url()
+    .startsWith("http")
+    .refine((val) => !val.endsWith("/"), {
+      message: "baseUrl cannot end with a slash",
+    }),
   defaultContextToUse: z.string().optional(),
   // TODO accept refresh rate (with min, max)
   // refresh: z.object({

@@ -51,6 +51,10 @@ model Source {
   // - pullAndWebhook
   importType String
 
+  // base url for this source (if applicable)
+  // e.g. `https://gitlab.com/api/v4` for managed gitlab
+  baseUrl String?
+
   // encrypted json, depends on type in use
   // contains auth data (e.g. token) and other source-related settings
   settings String /// @encrypted?mode=strict

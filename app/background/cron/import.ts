@@ -5,8 +5,6 @@ import { decodeSettings, listSource } from "../../models/source/source.server";
 import dayjs from "dayjs";
 import { GitlabPlugin } from "../../import";
 
-// TODO generalize the importing creating an abstract class that will be implemented by "plugins"
-
 /**
  * allows to import issues from other sources
  * 1. every X minutes
@@ -16,10 +14,10 @@ import { GitlabPlugin } from "../../import";
  */
 export class ImportFromSourceCron {
   start() {
-    console.debug("import source start");
+    console.log("import cronjob setup done");
     // TODO load cronjob rate from env/config
     const cron = new CronJob(`*/10 * * * *`, () => {
-      console.debug("running import " + new Date().toISOString());
+      console.info("running import " + new Date().toISOString());
       this.importFromSource();
     });
 
@@ -34,29 +32,32 @@ export class ImportFromSourceCron {
 
     // iterate, decode settings and fetch data
     for (const source of sourceList) {
-      // from the most recent imported task we can skip the already imported tasks
-      const __latestTask = source?.Task?.[0];
-      const mostRecentImportedTaskDate = __latestTask
-        ? dayjs(__latestTask.createdAt).add(1, "second").toDate()
-        : undefined;
+      try {
+        // from the most recent imported task we can skip the already imported tasks
+        const __latestTask = source?.Task?.[0];
+        const mostRecentImportedTaskDate = __latestTask
+          ? dayjs(__latestTask.createdAt).add(1, "second").toDate()
+          : undefined;
 
-      // extra tags to add
-      let tagsToAdd = source.defaultTags || "";
+        // extra tags to add
+        let tagsToAdd = source.defaultTags || "";
 
-      // if context is present add tags from context
-      if (source.context) {
-        tagsToAdd += source.context.tags;
-      }
+        // if context is present add tags from context
+        if (source.context) {
+          tagsToAdd += source.context.tags;
+        }
 
-      console.debug("source.settings", source.settings);
-      if (source.type === SourceTypeEnum.Enum.gitlab) {
-        const importer = new GitlabPlugin.GitlabImporter();
-        const settingsDecoded = decodeSettings<GitlabSettingsType>(source);
+        if (source.type === SourceTypeEnum.Enum.gitlab) {
+          const importer = new GitlabPlugin.GitlabImporter(source);
+          const settingsDecoded = decodeSettings<GitlabSettingsType>(source);
 
-        await importer.getAndCreateTasks(source, settingsDecoded, {
-          tagsToAdd: tagsToAdd,
-          overrideCreatedAfter: mostRecentImportedTaskDate,
-        });
+          await importer.getAndCreateTasks(source, settingsDecoded, {
+            tagsToAdd: tagsToAdd,
+            overrideCreatedAfter: mostRecentImportedTaskDate,
+          });
+        }
+      } catch (err) {
+        console.error(`failed to process source ${source.id}`, err);
       }
     }
   }

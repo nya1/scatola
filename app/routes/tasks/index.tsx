@@ -37,17 +37,14 @@ type LoaderData = Awaited<ReturnType<typeof getLoaderData>>;
 
 async function getLoaderData(queryParams?: URLSearchParams) {
   const contexts = await listContext();
-  console.debug("contexts", contexts);
   const activeContext = queryParams?.get("context");
-  console.debug("activeContext", activeContext);
 
   const rawTags = activeContext
     ? contexts.find((c) => c.name === activeContext)?.tags
     : undefined;
   const tags = rawTags ? rawTags.split(",") : [];
-  console.debug("loaded tags", tags);
   const tasks = await listTask({ tags });
-  console.debug("tasks", tasks);
+
   return {
     tasks,
     activeContext,
@@ -80,7 +77,6 @@ export default function TaskIndexPage() {
   // close popover when a new context is created
   useEffect(() => {
     if (popoverOpened && transition.stateChangedTo === "loading") {
-      console.debug("context created, closing popover");
       setPopoverOpened(false);
     }
   }, [transition.stateChangedTo, popoverOpened]);
@@ -118,7 +114,6 @@ export default function TaskIndexPage() {
 
   // on tab change update filters to use
   const setActiveTab = (tabVal: string) => {
-    console.debug("setActiveTab", tabVal);
     if (tabVal === NEW_CONTEXT_TAB) {
       return;
     }

@@ -32,7 +32,6 @@ export function TaskModal(params: {
   const availableProjects = Array.from(
     new Set<string>(params?.availableProjects || [])
   );
-  console.debug("projects", availableProjects);
 
   const preloadedData: string[] = params.prefillData?.tags
     ? params.prefillData.tags.split(",")
@@ -42,7 +41,6 @@ export function TaskModal(params: {
     ...preloadedData,
   ]);
 
-  console.debug("availableTags", availableTags);
   const [tags, setTags] = useState<string[]>(Array.from(availableTags));
   // console.log('before set tags', params.prefillData);
   // if (typeof params.prefillData?.tags === 'string') {

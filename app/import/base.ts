@@ -13,13 +13,6 @@ export abstract class ImportBaseClass {
       tagsToAdd?: string;
     }
   ): Promise<string[]> {
-    console.debug(
-      `ImportBaseClass.fetchIssues`,
-      source,
-      decodedSettings,
-      options
-    );
-
     throw new Error(`fetchIssues must be implemented`);
   }
 

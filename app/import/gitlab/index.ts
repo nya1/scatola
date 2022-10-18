@@ -61,12 +61,28 @@ export function mapGitlabIssueToTask(
 }
 
 export class GitlabImporter extends ImportBaseClass {
+
+  /**
+   * gitlab base url including the api version
+   */
+  private baseUrl: string;
+
+  constructor(source: Source) {
+    super();
+
+    if (!source.baseUrl) {
+      throw new Error(`expected a valid source.baseUrl for ${source.id}`);
+    }
+
+    this.baseUrl = source.baseUrl;
+  }
+
   private async _gitlabApiCall(
     path: string,
     queryParams: { [key: string]: unknown },
     token: string
   ) {
-    const url = new URL(`https://gitlab.com/api/v4${path}`);
+    const url = new URL(`${this.baseUrl}${path}`);
     // add query params
     for (const key of Object.keys(queryParams)) {
       const value = queryParams[key];
@@ -75,14 +91,14 @@ export class GitlabImporter extends ImportBaseClass {
       }
       url.searchParams.set(key, String(value));
     }
-    console.debug(url);
+
     const res = await fetch(url, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
     const jsonRes = await res.json();
-    console.debug("res", jsonRes);
+
     return jsonRes;
   }
 
@@ -116,7 +132,6 @@ export class GitlabImporter extends ImportBaseClass {
       // the reaction must be added manually on the issues
       my_reaction_emoji: "link",
     };
-    console.debug("baseQueryParams", baseQueryParams);
 
     // TODO handle pagination
     const issueList = (
@@ -124,6 +139,7 @@ export class GitlabImporter extends ImportBaseClass {
     ).filter((v: any) => {
       return filterIssues(v, projectListSettings);
     });
+    console.log(`found ${issueList?.length} for source ${source.id}`);
 
     // from gitlab issue to task
     // format gitlab issue into our task
@@ -135,7 +151,8 @@ export class GitlabImporter extends ImportBaseClass {
         options?.tagsToAdd
       );
       try {
-        await this.createNewTask(taskToCreate);
+        const taskRes = await this.createNewTask(taskToCreate);
+        console.log(`created new task ${taskRes.id} (source ${source.id})`);
       } catch (err) {
         if (
           err instanceof PrismaClientKnownRequestError &&

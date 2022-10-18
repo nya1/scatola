@@ -7,10 +7,10 @@ import {
   Scripts,
   ScrollRestoration,
 } from "@remix-run/react";
+import type { ColorScheme } from "@mantine/core";
 import {
   Text,
   ActionIcon,
-  ColorScheme,
   Grid,
   Group,
   Header,

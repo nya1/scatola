@@ -8,6 +8,8 @@ import {
   Select,
   SegmentedControl,
   useMantineTheme,
+  Input,
+  TextInput,
 } from "@mantine/core";
 import { DatePicker } from "@mantine/dates";
 import type { ActionFunction, LoaderArgs } from "@remix-run/node";
@@ -31,7 +33,6 @@ import {
 export async function loader({ request, params }: LoaderArgs) {
   const queryParams = getQueryParams(request.url);
   invariant(typeof queryParams.type === "string", "expected a type");
-  console.debug("queryParams", queryParams);
 
   // TODO move to client side?
   const contextList = await listContext(false);
@@ -53,13 +54,15 @@ export const action: ActionFunction = async ({ request }) => {
   ]);
   const type = formData.get("type");
   const defaultContextToUse = formData.get("defaultContextToUse");
-  console.debug("type, formSettings", type, formSettings);
+  const baseUrl = formData.get("baseUrl");
+
   const result = NewSource.safeParse({
     type,
     defaultContextToUse,
+    baseUrl,
     settings: formSettings,
   });
-  console.debug("result", result);
+
   if (!result.success) {
     return json(
       {
@@ -76,7 +79,6 @@ export const action: ActionFunction = async ({ request }) => {
     importType: SourceImportType.Enum.pull,
     defaultContextToUse: result.data.defaultContextToUse || null,
   });
-  console.debug("newSource", newSource);
 
   const lists = await listSource();
   console.log("LIST SOURCE AFTER", lists);
@@ -106,6 +108,16 @@ function GitlabImport() {
       />
 
       <Text mt="sm">Settings</Text>
+
+      <TextInput
+        pb="sm"
+        name="baseUrl"
+        placeholder="https://..../vN"
+        label="Base URL"
+        description="location of gitlab instance included the api version"
+        withAsterisk
+        defaultValue="https://gitlab.com/api/v4"
+      />
 
       <MultiSelect
         withAsterisk
