@@ -13,15 +13,27 @@ import { GitlabPlugin } from "../../import";
  * 4. create tasks
  */
 export class ImportFromSourceCron {
+  private cron?: CronJob;
+
+  stop() {
+    if (this.cron && this.cron.running) {
+      this.cron.stop();
+    }
+  }
+
   start() {
-    console.log("import cronjob setup done");
-    // TODO load cronjob rate from env/config
-    const cron = new CronJob(`*/10 * * * *`, () => {
+    const importCronRate = process.env.SCATOLA_IMPORT_CRON || `*/10 * * * *`;
+    // load cronjob rate from env/config
+
+    const cron = new CronJob(importCronRate, () => {
       console.info("running import " + new Date().toISOString());
       this.importFromSource();
     });
 
     cron.start();
+
+    this.cron = cron;
+    console.log(`import cronjob setup done with rate ${importCronRate}`);
   }
 
   async importFromSource() {

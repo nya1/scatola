@@ -19,3 +19,7 @@ export default function handleRequest(
     headers: responseHeaders,
   });
 }
+
+// declare global {
+//   var appStartSignal: undefined | true;
+// }
