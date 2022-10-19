@@ -7,6 +7,7 @@ import { SourceTypeEnum } from "../../models/source/dto/newSource.server";
 import dayjs from "dayjs";
 import { projectMatches } from "../../utils";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime";
+import axios from "axios";
 
 export function getUpstreamRef(type: string, issue: any) {
   return `${type}_${issue.id}`;
@@ -61,7 +62,6 @@ export function mapGitlabIssueToTask(
 }
 
 export class GitlabImporter extends ImportBaseClass {
-
   /**
    * gitlab base url including the api version
    */
@@ -92,12 +92,12 @@ export class GitlabImporter extends ImportBaseClass {
       url.searchParams.set(key, String(value));
     }
 
-    const res = await fetch(url, {
+    const res = await axios.get(url.toString(), {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
-    const jsonRes = await res.json();
+    const jsonRes = res.data;
 
     return jsonRes;
   }

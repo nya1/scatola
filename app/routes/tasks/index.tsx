@@ -160,7 +160,7 @@ export default function TaskIndexPage() {
               data.contexts.map((c, i) => {
                 return (
                   <Tabs.Tab value={c.name} key={`${c}_${i}`}>
-                    <Text>{capitalizeFirstLetter(c.name)}</Text>
+                    <Text>{c.name}</Text>
                   </Tabs.Tab>
                 );
               })}

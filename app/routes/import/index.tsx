@@ -81,7 +81,6 @@ export const action: ActionFunction = async ({ request }) => {
   });
 
   const lists = await listSource();
-  console.log("LIST SOURCE AFTER", lists);
 
   return redirect("/tasks");
 };

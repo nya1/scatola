@@ -81,6 +81,18 @@ model Context {
   Source Source[]
 }
 
+// annotation added to a task
+model Annotation {
+  id String @id @default(cuid())
+
+  content String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  Task      Task     @relation(fields: [taskId], references: [id])
+  taskId    String
+}
+
 model Task {
   id          String  @id @default(cuid())
   projectName String?
@@ -111,6 +123,8 @@ model Task {
   // if this task was imported
   // contains the raw json content based on the source
   rawImportedData String?
+
+  annotations Annotation[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

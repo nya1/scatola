@@ -7,7 +7,7 @@ Web-based task manager inspired by taskwarrior.
 - Run via docker
 
 ```bash
-docker run --rm -e SESSION_SECRET="super-secret-1" -e ENCRYPTION_KEY="super-secret-2" -v $PWD/scatola.db:/data/sqlite.db -p 8080:8080 ghcr.io/nya1/scatola:latest
+docker run -d --name scatola -e SESSION_SECRET="super-secret-1" -e ENCRYPTION_KEY="super-secret-2" -v $PWD/scatola.db:/data/sqlite.db -p 8080:8080 ghcr.io/nya1/scatola:latest
 ```
 
 Scatola will be available on localhost:8080
