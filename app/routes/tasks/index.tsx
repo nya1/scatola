@@ -4,12 +4,14 @@ import {
   Box,
   Button,
   Center,
+  Checkbox,
   Grid,
   Group,
   HoverCard,
   Menu,
   MultiSelect,
   Popover,
+  SegmentedControl,
   Select,
   Stack,
   Tabs,
@@ -20,7 +22,7 @@ import {
   UnstyledButton,
   useMantineTheme,
 } from "@mantine/core";
-import { listTask } from "../../models/task.server";
+import { listTask, Task } from "../../models/task.server";
 import {
   Form,
   Link,
@@ -41,7 +43,7 @@ import {
   IconTool,
   IconTools,
 } from "@tabler/icons";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useDebouncedValue } from "@mantine/hooks";
 import { CustomBadge } from "../../components/customBadge";
 import {
@@ -51,6 +53,7 @@ import {
 } from "../../utils";
 import { listContext } from "../../models/context.server";
 import dayjs from "dayjs";
+import type { SerializeFrom } from "@remix-run/server-runtime";
 
 type LoaderData = Awaited<ReturnType<typeof getLoaderData>>;
 
@@ -82,11 +85,24 @@ export default function TaskIndexPage() {
   const theme = useMantineTheme();
 
   const data = useLoaderData<LoaderData>();
-  const initialRecords = data.tasks;
-  const [records, setRecords] = useState(initialRecords);
 
-  const [query, setQuery] = useState("");
+  const initialFilterStatus = "pending";
+
+  const __filterByStatus = (statusList: string[]) => {
+    return (task: SerializeFrom<Task>) => {
+      return statusList.includes(task.status);
+    };
+  };
+
+  const initialRecords = data.tasks;
+  const [records, setRecords] = useState(
+    initialRecords.filter(__filterByStatus([initialFilterStatus]))
+  );
+
+  const defaultInitialQuery = "";
+  const [query, setQuery] = useState(defaultInitialQuery);
   const [debouncedQuery] = useDebouncedValue(query, 200);
+  const previousDebounceQuery = useRef(defaultInitialQuery);
 
   const transition = useTransitionTracking();
 
@@ -100,7 +116,17 @@ export default function TaskIndexPage() {
     }
   }, [transition.stateChangedTo, popoverOpened]);
 
+  const triggerFilterByStatus = (statusList: string[]) => {
+    setRecords(initialRecords.filter(__filterByStatus(statusList)));
+  };
+
   useEffect(() => {
+    // do not run at init
+    if (debouncedQuery === previousDebounceQuery.current) {
+      return;
+    }
+    previousDebounceQuery.current = debouncedQuery;
+    console.debug("search query trigger " + debouncedQuery);
     setRecords(
       initialRecords.filter((task) => {
         // specific filtering for `project:<dynamic>`
@@ -122,7 +148,8 @@ export default function TaskIndexPage() {
         return true;
       })
     );
-  }, [debouncedQuery, initialRecords]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedQuery]);
 
   const NEW_CONTEXT_TAB = "____new-context";
 
@@ -266,7 +293,6 @@ export default function TaskIndexPage() {
           <Button
             mt={2}
             component={Link}
-            variant="light"
             leftIcon={<IconPlus size={18} />}
             pr={12}
             ml={6}
@@ -286,6 +312,19 @@ export default function TaskIndexPage() {
             value={query}
             onChange={(e) => setQuery(e.currentTarget.value)}
           />
+        </Grid.Col>
+        <Grid.Col span={4}>
+          <Checkbox.Group
+            onChange={triggerFilterByStatus}
+            defaultValue={[initialFilterStatus]}
+            spacing="xs"
+            mb="xs"
+          >
+            <Checkbox value="pending" label="Pending" />
+            <Checkbox value="waiting" label="Waiting" />
+            <Checkbox value="completed" label="Completed" />
+            <Checkbox value="deleted" label="Deleted" />
+          </Checkbox.Group>
         </Grid.Col>
       </Grid>
 
