@@ -121,7 +121,7 @@ export async function __rawCreateTask(data: Prisma.TaskCreateInput) {
 
 export function updateTask(
   id: string,
-  params: Partial<Omit<Task, "id" | "createdAt" | "updatedAt">>
+  params: Partial<Omit<Prisma.TaskUpdateInput, "id" | "createdAt" | "updatedAt">>
 ) {
   return prisma.task.update({
     where: {
