@@ -230,3 +230,24 @@ export const projectMatches = (
     "^" + fullProjectNameSettings.replace(/\*/g, ".*") + "$"
   ).test(compareTo);
 };
+
+export function unpackSearchQuery(text: string) {
+  let freeQuery = text;
+  const re = /(\w+):\s*(?:"([^"]*)"|(\S+))/g;
+  const dict: {[k: string]: string} = {}
+  let m: RegExpExecArray | null = re.exec(text);
+  while (m) {
+    const key = m[1];
+    const val = m[3] || m[2];
+    dict[key] = val;
+    m = re.exec(text)
+    // TODO escape when value provided contains quote (mykey:"myvalue")
+    freeQuery = freeQuery.replace(new RegExp(`${key}|${val}|:`, 'g'), '').trim();
+  }
+  
+  return {
+    dict,
+    keys: Object.keys(dict),
+    freeQuery,
+  };
+}

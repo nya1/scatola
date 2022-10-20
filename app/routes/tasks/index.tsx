@@ -49,6 +49,7 @@ import { CustomBadge } from "../../components/customBadge";
 import {
   safeMarked,
   toHumanReadableDate,
+  unpackSearchQuery,
   useTransitionTracking,
 } from "../../utils";
 import { listContext } from "../../models/context.server";
@@ -126,29 +127,32 @@ export default function TaskIndexPage() {
       return;
     }
     previousDebounceQuery.current = debouncedQuery;
-    console.debug("search query trigger " + debouncedQuery);
+    const unpackedSearchQuery = unpackSearchQuery(debouncedQuery);
+
+    console.debug(
+      "search query trigger " + debouncedQuery,
+      unpackedSearchQuery
+    );
+
     setRecords(
       initialRecords.filter((task) => {
         // specific filtering for `project:<dynamic>`
-        if (
-          debouncedQuery.startsWith("project:") &&
-          debouncedQuery.split(":")[1] === task.projectName
-        ) {
-          return true;
-        }
+        const projectMatch =
+          typeof unpackedSearchQuery.dict.project !== "undefined" &&
+          unpackedSearchQuery.dict.project === task.projectName;
 
-        if (
-          debouncedQuery !== "" &&
-          !`${task.projectName} ${task.title} ${task.description} ${task.tags} ${task.rawImportedData}`
+        // free form text query
+        const cleanQuery = unpackedSearchQuery.freeQuery;
+        const textSearchMatch =
+          cleanQuery !== "" &&
+          !!`${task.projectName} ${task.title} ${task.description} ${task.tags} ${task.rawImportedData}`
             .toLowerCase()
-            .includes(debouncedQuery.trim().toLowerCase())
-        ) {
-          return false;
-        }
-        return true;
+            .includes(cleanQuery.trim().toLowerCase());
+
+        return textSearchMatch || projectMatch;
       })
     );
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedQuery]);
 
   const NEW_CONTEXT_TAB = "____new-context";
