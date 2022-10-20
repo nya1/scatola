@@ -1,6 +1,6 @@
 import type { ActionArgs, LoaderArgs, MetaFunction } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
-import { Form, useCatch, useLoaderData } from "@remix-run/react";
+import { Form, ShouldReloadFunction, useCatch, useLoaderData } from "@remix-run/react";
 import invariant from "tiny-invariant";
 
 import {
@@ -10,7 +10,11 @@ import {
   updateTask,
 } from "../../../models/task.server";
 import { TaskModal } from "../../../components/taskModal";
-import { composeRedirectUrlWithContext, getContextFromUrl } from "../../../utils";
+import {
+  composeRedirectUrlWithContext,
+  getContextFromUrl,
+  getFormDataFieldsAsObject,
+} from "../../../utils";
 
 export async function loader({ request, params }: LoaderArgs) {
   const task = await getTask({ id: params.taskId });
@@ -43,13 +47,27 @@ export async function action({ request, params }: ActionArgs) {
 
   const body = await request.formData();
 
+  const fieldsLoaded = getFormDataFieldsAsObject(body, [
+    "title",
+    "description",
+    "tags",
+    "due",
+    "projectName",
+    "scheduled",
+    "status",
+  ]);
+  console.log('fieldsLoaded', fieldsLoaded);
+
   await updateTask(params.taskId, {
-    title: body.get("title") as string,
-    description: body.get("description") as string,
-    tags: body.get("tags") as string,
-    due: new Date(body.get("due") as string),
-    projectName: body.get("projectName") as string,
-    scheduled: new Date(body.get("scheduled") as string),
+    ...fieldsLoaded,
+    due:
+      typeof fieldsLoaded?.due === "string"
+        ? new Date(fieldsLoaded.due)
+        : undefined,
+    scheduled:
+      typeof fieldsLoaded?.scheduled === "string"
+        ? new Date(fieldsLoaded.scheduled)
+        : undefined,
   });
 
   return redirect(

@@ -206,22 +206,27 @@ export type InferSafeParseErrors<
   };
 };
 
-export function getFormDataFieldsAsObject<R extends {[key: string]: unknown}>(
+export function getFormDataFieldsAsObject<R extends { [key: string]: unknown }>(
   formData: FormData,
   fields: (keyof R)[] // TODO improve fields typing
 ) {
   const wrapperObj: { [field: string]: unknown } = {};
-  
+
   for (const field of fields) {
     const fieldStr = field as string;
     const formVal = formData?.get(fieldStr);
     // empty strings will be automatically converted to undefined
-    wrapperObj[fieldStr] = formVal === '' ? undefined : formVal;
+    wrapperObj[fieldStr] = formVal === "" ? undefined : formVal;
   }
-  
+
   return wrapperObj;
 }
 
-export const projectMatches = (fullProjectNameSettings: string, compareTo: string): boolean => {
-  return new RegExp('^' + fullProjectNameSettings.replace(/\*/g, '.*') + '$').test(compareTo)
+export const projectMatches = (
+  fullProjectNameSettings: string,
+  compareTo: string
+): boolean => {
+  return new RegExp(
+    "^" + fullProjectNameSettings.replace(/\*/g, ".*") + "$"
+  ).test(compareTo);
 };

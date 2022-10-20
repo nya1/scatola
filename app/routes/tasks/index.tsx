@@ -6,26 +6,45 @@ import {
   Center,
   Grid,
   Group,
+  HoverCard,
+  Menu,
   MultiSelect,
   Popover,
+  Select,
   Stack,
   Tabs,
   Text,
+  Textarea,
   TextInput,
   Tooltip,
+  UnstyledButton,
   useMantineTheme,
 } from "@mantine/core";
 import { listTask } from "../../models/task.server";
-import { Form, Link, useLoaderData, useNavigate } from "@remix-run/react";
+import {
+  Form,
+  Link,
+  useFetcher,
+  useLoaderData,
+  useNavigate,
+  useSubmit,
+} from "@remix-run/react";
 import type { LoaderFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { DataTable } from "mantine-datatable";
-import { IconBrandGitlab, IconEdit, IconPlus, IconSearch } from "@tabler/icons";
+import {
+  IconBrandGitlab,
+  IconChevronDown,
+  IconEdit,
+  IconPlus,
+  IconSearch,
+  IconTool,
+  IconTools,
+} from "@tabler/icons";
 import React, { useEffect, useState } from "react";
 import { useDebouncedValue } from "@mantine/hooks";
 import { CustomBadge } from "../../components/customBadge";
 import {
-  capitalizeFirstLetter,
   safeMarked,
   toHumanReadableDate,
   useTransitionTracking,
@@ -277,7 +296,7 @@ export default function TaskIndexPage() {
       </div> */}
 
       <DataTable
-        minHeight={150}
+        minHeight={350}
         emptyState={
           <div>
             <Text>No tasks found</Text>
@@ -324,6 +343,57 @@ export default function TaskIndexPage() {
                 }
               }
               return <span>{projectName}</span>;
+            },
+          },
+          {
+            accessor: "status",
+            title: "Status",
+            render: ({ id, status }) => {
+              return (
+                <HoverCard width={280} shadow="md" withArrow>
+                  <HoverCard.Target>
+                    <UnstyledButton>
+                      <Group spacing={0}>
+                        <Text size="sm">{status}</Text>
+                        <IconChevronDown size={15} />
+                      </Group>
+                    </UnstyledButton>
+                  </HoverCard.Target>
+                  <HoverCard.Dropdown>
+                    <Box>
+                      <Form
+                        method="put"
+                        action={`/tasks/edit-partial/${id}`}
+                        replace
+                      >
+                        <Select
+                          name="status"
+                          label="Update to"
+                          placeholder="New status"
+                          data={[
+                            "pending",
+                            "waiting",
+                            "completed",
+                            "deleted",
+                          ].filter((v) => v !== status)}
+                          pb="sm"
+                        />
+
+                        <Textarea
+                          name="note"
+                          label="Note"
+                          placeholder="Add an optional note"
+                          pb="sm"
+                        />
+
+                        <Button type="submit" fullWidth>
+                          Save
+                        </Button>
+                      </Form>
+                    </Box>
+                  </HoverCard.Dropdown>
+                </HoverCard>
+              );
             },
           },
           {
@@ -387,7 +457,7 @@ export default function TaskIndexPage() {
           collapseProps: {
             animateOpacity: false,
             transitionDuration: 0,
-            transitionTimingFunction: "unset",
+            // transitionTimingFunction: "unset",
           },
           content: ({ record }) => (
             <div style={{ padding: "2px 15px" }}>
