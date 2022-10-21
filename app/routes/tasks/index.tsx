@@ -74,7 +74,7 @@ async function getLoaderData(queryParams?: URLSearchParams) {
     ?.join(",");
   console.log("tagsOfContext", tagsOfContext);
 
-  console.log(tasks)
+  console.log(tasks);
 
   return {
     tasks,
@@ -95,9 +95,13 @@ export default function TaskIndexPage() {
 
   const data = useLoaderData<LoaderData>();
 
-  console.log('task index page', data);
+  // console.log("task index page", data);
 
   const initialFilterStatus = "pending";
+
+  const [filterStatusSelected, setFilterStatusValue] = useState<string[]>([
+    initialFilterStatus,
+  ]);
 
   const __filterByStatus = (statusList: string[]) => {
     return (task: SerializeFrom<Task>) => {
@@ -129,6 +133,7 @@ export default function TaskIndexPage() {
 
   const triggerFilterByStatus = (statusList: string[]) => {
     setRecords(initialRecords.filter(__filterByStatus(statusList)));
+    setFilterStatusValue(statusList);
   };
 
   useEffect(() => {
@@ -146,27 +151,30 @@ export default function TaskIndexPage() {
 
     setRecords(
       initialRecords.filter((task) => {
-        if (debouncedQuery === "") {
-          return true;
-        }
-
         // specific filtering for `project:<dynamic>`
         const projectMatch =
-          typeof unpackedSearchQuery.dict.project !== "undefined" &&
-          unpackedSearchQuery.dict.project === task.projectName;
+          typeof unpackedSearchQuery.dict.project === "undefined"
+            ? true
+            : unpackedSearchQuery.dict.project === task.projectName;
 
         // free form text query
         const cleanQuery = unpackedSearchQuery.freeQuery;
         const textSearchMatch =
-          cleanQuery !== "" &&
-          !!`${task.projectName} ${task.title} ${task.description} ${task.tags} ${task.rawImportedData}`
-            .toLowerCase()
-            .includes(cleanQuery.trim().toLowerCase());
+          cleanQuery === ""
+            ? true
+            : !!`${task.projectName} ${task.title} ${task.description} ${task.tags} ${task.rawImportedData}`
+                .toLowerCase()
+                .includes(cleanQuery.trim().toLowerCase());
 
-        return textSearchMatch || projectMatch;
+        console.log("textSearchMatch", textSearchMatch);
+        console.log("projectMatch", projectMatch);
+
+        const statusMatch = filterStatusSelected.includes(task.status);
+
+        return statusMatch && textSearchMatch && projectMatch;
       })
     );
-  }, [debouncedQuery, initialRecords]);
+  }, [debouncedQuery, filterStatusSelected, initialRecords]);
 
   const NEW_CONTEXT_TAB = "____new-context";
 
@@ -332,8 +340,8 @@ export default function TaskIndexPage() {
         </Grid.Col>
         <Grid.Col span={4}>
           <Checkbox.Group
+            value={filterStatusSelected}
             onChange={triggerFilterByStatus}
-            defaultValue={[initialFilterStatus]}
             spacing="xs"
             mb="xs"
           >
@@ -359,10 +367,7 @@ export default function TaskIndexPage() {
           </div>
         }
         highlightOnHover
-        // provide data
         records={records}
-        // define columns
-        // TODO improve typing using original Task type
         // TODO add sorting
         columns={[
           {
@@ -406,21 +411,22 @@ export default function TaskIndexPage() {
             title: "Status",
             render: ({ id, status }) => {
               return (
-                <HoverCard width={280} shadow="md" withArrow>
-                  <HoverCard.Target>
+                <Popover width={280} position="bottom" shadow="md" withArrow>
+                  <Popover.Target>
                     <UnstyledButton>
                       <Group spacing={0}>
                         <Text size="sm">{status}</Text>
                         <IconChevronDown size={15} />
                       </Group>
                     </UnstyledButton>
-                  </HoverCard.Target>
-                  <HoverCard.Dropdown>
+                  </Popover.Target>
+                  <Popover.Dropdown>
                     <Box>
                       <Form
                         method="put"
                         action={`/tasks/edit-partial/${id}`}
                         replace
+                        onClick={(e) => e.stopPropagation()}
                       >
                         <Select
                           name="status"
@@ -447,8 +453,8 @@ export default function TaskIndexPage() {
                         </Button>
                       </Form>
                     </Box>
-                  </HoverCard.Dropdown>
-                </HoverCard>
+                  </Popover.Dropdown>
+                </Popover>
               );
             },
           },
