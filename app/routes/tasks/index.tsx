@@ -22,7 +22,8 @@ import {
   UnstyledButton,
   useMantineTheme,
 } from "@mantine/core";
-import { listTask, Task } from "../../models/task.server";
+import type { Task } from "../../models/task.server";
+import { listTask } from "../../models/task.server";
 import {
   Form,
   Link,

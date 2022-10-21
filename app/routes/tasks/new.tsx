@@ -5,11 +5,12 @@ import type {
 } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
+import type {
+  Task} from "../../models/task.server";
 import {
   createTask,
   getAllProjectsUsed,
   getAllTagsUsed,
-  Task,
   TaskStatus,
 } from "../../models/task.server";
 import { TaskModal } from "../../components/taskModal";

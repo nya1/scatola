@@ -1,5 +1,6 @@
-import { Prisma } from "@prisma/client";
-import { ActionArgs, json, redirect } from "@remix-run/node";
+import type { Prisma } from "@prisma/client";
+import type { ActionArgs} from "@remix-run/node";
+import { json, redirect } from "@remix-run/node";
 import invariant from "tiny-invariant";
 
 import { updateTask } from "../../../models/task.server";
@@ -16,13 +17,15 @@ export async function action({ request, params }: ActionArgs) {
   const fieldsLoaded = getFormDataFieldsAsObject(body, ["status"]);
   console.log("fieldsLoaded", fieldsLoaded);
 
-  const noteList = body.getAll("note");
+  const noteList = body
+    .getAll("note")
+    ?.filter((v) => typeof v === "string" && v) as string[];
   const annotationsToCreate:
     | Prisma.AnnotationUpdateManyWithoutTaskNestedInput
     | undefined =
     noteList && noteList.length > 0
       ? {
-          create: (noteList as string[]).map((c) => {
+          create: noteList.map((c) => {
             return {
               content: c,
             };
