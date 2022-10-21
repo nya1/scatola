@@ -51,6 +51,7 @@ export class ImportFromSourceCron {
           ? dayjs(__latestTask.createdAt).add(1, "second").toDate()
           : undefined;
 
+        // TODO use a set and convert to string to remove duplicates
         // extra tags to add
         let tagsToAdd = source.defaultTags || "";
 
