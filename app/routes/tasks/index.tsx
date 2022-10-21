@@ -40,8 +40,6 @@ import {
   IconEdit,
   IconPlus,
   IconSearch,
-  IconTool,
-  IconTools,
 } from "@tabler/icons";
 import React, { useEffect, useRef, useState } from "react";
 import { useDebouncedValue } from "@mantine/hooks";
@@ -66,13 +64,22 @@ async function getLoaderData(queryParams?: URLSearchParams) {
     ? contexts.find((c) => c.name === activeContext)?.tags
     : undefined;
   const tags = rawTags ? rawTags.split(",") : [];
+  console.log("tags", tags);
   const tasks = await listTask({ tags });
+
+  const tagsOfContext = tags
+    ?.filter((v) => v.startsWith("+"))
+    ?.map((v) => v.replace("+", ""))
+    ?.join(",");
+  console.log("tagsOfContext", tagsOfContext);
+
+  console.log(tasks)
 
   return {
     tasks,
     activeContext,
     contexts,
-    tagsOfContext: tags?.join(","),
+    tagsOfContext,
   };
 }
 
@@ -86,6 +93,8 @@ export default function TaskIndexPage() {
   const theme = useMantineTheme();
 
   const data = useLoaderData<LoaderData>();
+
+  console.log('task index page', data);
 
   const initialFilterStatus = "pending";
 
@@ -123,10 +132,10 @@ export default function TaskIndexPage() {
 
   useEffect(() => {
     // do not run at init
-    if (debouncedQuery === previousDebounceQuery.current) {
-      return;
-    }
-    previousDebounceQuery.current = debouncedQuery;
+    // if (debouncedQuery === previousDebounceQuery.current) {
+    //   return;
+    // }
+    // previousDebounceQuery.current = debouncedQuery;
     const unpackedSearchQuery = unpackSearchQuery(debouncedQuery);
 
     console.debug(
@@ -136,6 +145,10 @@ export default function TaskIndexPage() {
 
     setRecords(
       initialRecords.filter((task) => {
+        if (debouncedQuery === "") {
+          return true;
+        }
+
         // specific filtering for `project:<dynamic>`
         const projectMatch =
           typeof unpackedSearchQuery.dict.project !== "undefined" &&
@@ -152,8 +165,7 @@ export default function TaskIndexPage() {
         return textSearchMatch || projectMatch;
       })
     );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedQuery]);
+  }, [debouncedQuery, initialRecords]);
 
   const NEW_CONTEXT_TAB = "____new-context";
 
@@ -251,8 +263,8 @@ export default function TaskIndexPage() {
 
                     <MultiSelect
                       name="tags"
-                      label="Tags for this context"
-                      description="used as filters in list view and automatically applied on new tasks"
+                      label="Tags filters"
+                      description="used during filters, + prefix to add tag, - to remove (view)"
                       data={[]}
                       // value={tags}
                       clearable

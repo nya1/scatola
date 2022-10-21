@@ -9,11 +9,17 @@ import {
   createTask,
   getAllProjectsUsed,
   getAllTagsUsed,
+  Task,
   TaskStatus,
 } from "../../models/task.server";
 import { TaskModal } from "../../components/taskModal";
 import { useLoaderData } from "@remix-run/react";
-import { composeRedirectUrlWithContext, getContextFromUrl, getQueryParams } from "../../utils";
+import {
+  composeRedirectUrlWithContext,
+  getContextFromUrl,
+  getFormDataFieldsAsObject,
+  getQueryParams,
+} from "../../utils";
 
 export const meta: MetaFunction = () => {
   return {
@@ -43,17 +49,23 @@ export const loader: LoaderFunction = async ({ request }) => {
 export const action: ActionFunction = async ({ request }) => {
   const body = await request.formData();
 
+  const fields = getFormDataFieldsAsObject<Task>(
+    body,
+    ["title", "description", "tags", "due", "projectName", "scheduled"],
+    null
+  );
+
   const res = await createTask({
-    title: body.get("title") as string,
-    description: body.get("description") as string,
-    tags: body.get("tags") as string,
-    due: new Date(body.get("due") as string),
-    projectName: body.get("projectName") as string,
+    title: fields.title,
+    tags: fields.tags,
+    projectName: fields.projectName,
+    description: fields.descrtiption,
+    due: fields.due ? new Date(fields.due as string) : null,
+    scheduled: fields.scheduled ? new Date(fields.scheduled as string) : null,
+    status: TaskStatus.PENDING,
     fromSourceId: null,
     webUrl: null,
-    scheduled: new Date(body.get("scheduled") as string),
     rawImportedData: null,
-    status: TaskStatus.PENDING,
   });
 
   return redirect(
@@ -67,7 +79,7 @@ export default function NewTask() {
   return (
     <TaskModal
       actionType="create"
-      prefillData={{tags: data.tagsToPrefill}}
+      prefillData={{ tags: data.tagsToPrefill }}
       availableTags={data.tagsList}
       availableProjects={data.projectList}
       activeContext={data.activeContext}

@@ -206,17 +206,18 @@ export type InferSafeParseErrors<
   };
 };
 
-export function getFormDataFieldsAsObject<R extends { [key: string]: unknown }>(
+export function getFormDataFieldsAsObject<R extends { [key: string]: any }>(
   formData: FormData,
-  fields: (keyof R)[] // TODO improve fields typing
+  fields: (keyof R)[], // TODO improve fields typing
+  defaultValue: null | undefined = undefined
 ) {
-  const wrapperObj: { [field: string]: unknown } = {};
+  const wrapperObj: { [field: string]: any } = {};
 
   for (const field of fields) {
     const fieldStr = field as string;
     const formVal = formData?.get(fieldStr);
     // empty strings will be automatically converted to undefined
-    wrapperObj[fieldStr] = formVal === "" ? undefined : formVal;
+    wrapperObj[fieldStr] = formVal === "" ? defaultValue : formVal;
   }
 
   return wrapperObj;

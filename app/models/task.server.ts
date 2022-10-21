@@ -60,17 +60,35 @@ export async function getAllProjectsUsed() {
 export function listTask(params?: {
   tags: string[];
 }): PrismaPromise<TaskWithSource[]> {
-  const where: Prisma.TaskWhereInput | undefined = params && params.tags?.length > 0
-    ? {
-        OR: params.tags.map((t): Prisma.TaskWhereInput => {
-          return {
-            tags: {
-              contains: t,
-            },
-          };
-        }),
-      }
-    : undefined;
+  const positiveTags =
+    params?.tags
+      .filter((v) => v.startsWith("+"))
+      .map((v) => v.replace("+", "")) || [];
+  const negativeTags =
+    params?.tags
+      .filter((v) => v.startsWith("-"))
+      .map((v) => v.replace("-", "")) || [];
+  const where: Prisma.TaskWhereInput | undefined =
+    params && params.tags?.length > 0
+      ? {
+          OR: positiveTags?.map((t): Prisma.TaskWhereInput => {
+            return {
+              tags: {
+                contains: t,
+              },
+            };
+          }),
+          AND: negativeTags?.map((t): Prisma.TaskWhereInput => {
+            return {
+              tags: {
+                not: {
+                  contains: t,
+                },
+              },
+            };
+          }),
+        }
+      : undefined;
   return prisma.task.findMany({
     where,
     include: {
@@ -116,12 +134,14 @@ export function createTask(
 }
 
 export async function __rawCreateTask(data: Prisma.TaskCreateInput) {
-  return prisma.task.create({data});
+  return prisma.task.create({ data });
 }
 
 export function updateTask(
   id: string,
-  params: Partial<Omit<Prisma.TaskUpdateInput, "id" | "createdAt" | "updatedAt">>
+  params: Partial<
+    Omit<Prisma.TaskUpdateInput, "id" | "createdAt" | "updatedAt">
+  >
 ) {
   return prisma.task.update({
     where: {
