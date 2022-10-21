@@ -57,7 +57,10 @@ export class ImportFromSourceCron {
 
         // if context is present add tags from context
         if (source.context) {
-          tagsToAdd += source.context.tags;
+          tagsToAdd += source.context.tags
+            .split(",")
+            .filter((v) => v.startsWith("+"))
+            .join(",");
         }
 
         if (source.type === SourceTypeEnum.Enum.gitlab) {
