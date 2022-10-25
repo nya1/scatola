@@ -1,5 +1,5 @@
 import type { Prisma, Source } from "@prisma/client";
-import { __rawCreateTask } from "../models/task.server";
+import { __rawUpsertTask } from "../models/task.server";
 
 /**
  * for each plugin extend this class and implement methods
@@ -17,6 +17,6 @@ export abstract class ImportBaseClass {
   }
 
   protected createNewTask(taskToCreate: Prisma.TaskCreateInput) {
-    return __rawCreateTask(taskToCreate);
+    return __rawUpsertTask(taskToCreate);
   }
 }

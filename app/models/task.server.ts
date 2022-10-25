@@ -133,8 +133,14 @@ export function createTask(
   });
 }
 
-export async function __rawCreateTask(data: Prisma.TaskCreateInput) {
-  return prisma.task.create({ data });
+export async function __rawUpsertTask(data: Prisma.TaskCreateInput) {
+  return prisma.task.upsert({ 
+    where: {
+      id: data.id,
+    },
+    create: data,
+    update: data,
+  });
 }
 
 export function updateTask(
