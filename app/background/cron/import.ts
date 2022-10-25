@@ -60,6 +60,7 @@ export class ImportFromSourceCron {
           tagsToAdd += source.context.tags
             .split(",")
             .filter((v) => v.startsWith("+"))
+            .map((v) => v.replace("+", ""))
             .join(",");
         }
 
