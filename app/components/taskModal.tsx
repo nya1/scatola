@@ -2,8 +2,10 @@ import {
   Autocomplete,
   Button,
   Center,
+  Checkbox,
   Modal,
   MultiSelect,
+  Select,
   Textarea,
   TextInput,
   useMantineTheme,
@@ -87,6 +89,15 @@ export function TaskModal(params: {
             label="Title"
             pb={10}
             defaultValue={params.prefillData?.title || undefined}
+          />
+
+          <Select
+            name="status"
+            label="Update to"
+            placeholder="status"
+            data={["pending", "waiting", "completed", "deleted"]}
+            value={params.prefillData?.status || "pending"}
+            pb={10}
           />
 
           <Textarea
