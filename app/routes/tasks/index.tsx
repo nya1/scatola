@@ -360,7 +360,7 @@ export default function TaskIndexPage() {
       </div> */}
 
       <DataTable
-        minHeight={350}
+        minHeight={500}
         emptyState={
           <div>
             <Text>No tasks found</Text>
