@@ -46,9 +46,12 @@ import React, { useEffect, useRef, useState } from "react";
 import { useDebouncedValue } from "@mantine/hooks";
 import { CustomBadge } from "../../components/customBadge";
 import {
+  buildURLQuery,
+  getQueryParams,
   safeMarked,
   toHumanReadableDate,
   unpackSearchQuery,
+  useLocalStorageState,
   useTransitionTracking,
 } from "../../utils";
 import { listContext } from "../../models/context.server";
@@ -57,9 +60,10 @@ import type { SerializeFrom } from "@remix-run/server-runtime";
 
 type LoaderData = Awaited<ReturnType<typeof getLoaderData>>;
 
-async function getLoaderData(queryParams?: URLSearchParams) {
+async function getLoaderData(url: string) {
+  const queryParams = getQueryParams(url);
   const contexts = await listContext();
-  const activeContext = queryParams?.get("context");
+  const activeContext = queryParams.activeContext;
 
   const rawTags = activeContext
     ? contexts.find((c) => c.name === activeContext)?.tags
@@ -85,9 +89,7 @@ async function getLoaderData(queryParams?: URLSearchParams) {
 }
 
 export const loader: LoaderFunction = async ({ request }) => {
-  const url = new URL(request.url);
-
-  return json<LoaderData>(await getLoaderData(url.searchParams));
+  return json<LoaderData>(await getLoaderData(request.url));
 };
 
 export default function TaskIndexPage() {
@@ -95,13 +97,12 @@ export default function TaskIndexPage() {
 
   const data = useLoaderData<LoaderData>();
 
-  // console.log("task index page", data);
-
-  const initialFilterStatus = "pending";
-
-  const [filterStatusSelected, setFilterStatusValue] = useState<string[]>([
-    initialFilterStatus,
-  ]);
+  const [filterStatusSelected, setFilterStatusValue] = useLocalStorageState<
+    string[]
+  >(`filterStatus`, ["pending"], {
+    serialize: (val) => val.join(","),
+    deserialize: (val) => val.split(","),
+  });
 
   const __filterByStatus = (statusList: string[]) => {
     return (task: SerializeFrom<Task>) => {
@@ -111,7 +112,7 @@ export default function TaskIndexPage() {
 
   const initialRecords = data.tasks;
   const [records, setRecords] = useState(
-    initialRecords.filter(__filterByStatus([initialFilterStatus]))
+    initialRecords.filter(__filterByStatus(filterStatusSelected))
   );
 
   const defaultInitialQuery = "";
@@ -199,10 +200,11 @@ export default function TaskIndexPage() {
 
   // calculates the new task url to use
   // it must contain all tags to be applied and the context (for later redirect)
-  let queryParamsToApply = "";
+  let baseQueryParams: { [key: string]: string } = {};
   if (data.activeContext) {
-    queryParamsToApply += `?context=${data.activeContext}`;
+    baseQueryParams.context = data.activeContext;
   }
+  const queryParamsToApply = buildURLQuery(baseQueryParams);
 
   let newTaskUrl = `/tasks/new${queryParamsToApply}`;
   if (

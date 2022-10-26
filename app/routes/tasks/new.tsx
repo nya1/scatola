@@ -70,7 +70,7 @@ export const action: ActionFunction = async ({ request }) => {
   });
 
   return redirect(
-    composeRedirectUrlWithContext("/tasks", new URL(request.url))
+    composeRedirectUrlWithContext("/tasks", request.url)
   );
 };
 

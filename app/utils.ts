@@ -1,6 +1,6 @@
 import { useMatches, useTransition } from "@remix-run/react";
 import { marked } from "marked";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { sanitize } from "dompurify";
 
 import type { QUnitType } from "dayjs";
@@ -89,7 +89,8 @@ function __safeGetQueryParam(
 export function getQueryParams(url: string) {
   const parsedUrl = new URL(url);
   return {
-    activeContext: __safeGetQueryParam(parsedUrl, "activeContext"),
+    status: __safeGetQueryParam(parsedUrl, "status"),
+    activeContext: __safeGetQueryParam(parsedUrl, "context"),
     tags: __safeGetQueryParam(parsedUrl, "tags"),
     type: __safeGetQueryParam(parsedUrl, "type"),
   };
@@ -106,22 +107,27 @@ export function composeWhitelistedRedirectUrl(
   newPath: string,
   params: {
     context?: string;
+    status?: string;
   }
 ) {
   let path = `${newPath}`;
   if (params.context) {
     path += `?context=${params.context}`;
   }
+  if (params.status) {
+    path += `?status=${params.status}`;
+  }
   return path;
 }
 
 export function composeRedirectUrlWithContext(
   newPath: string,
-  originalUrl: URL
+  originalUrl: string
 ) {
-  const contextToUse = originalUrl.searchParams?.get("context");
+  const queryParams = getQueryParams(originalUrl);
   return composeWhitelistedRedirectUrl(newPath, {
-    context: contextToUse || undefined,
+    context: queryParams.activeContext,
+    status: queryParams.status,
   });
 }
 
@@ -235,20 +241,73 @@ export const projectMatches = (
 export function unpackSearchQuery(text: string) {
   let freeQuery = text;
   const re = /(\w+):\s*(?:"([^"]*)"|(\S+))/g;
-  const dict: {[k: string]: string} = {}
+  const dict: { [k: string]: string } = {};
   let m: RegExpExecArray | null = re.exec(text);
   while (m) {
     const key = m[1];
     const val = m[3] || m[2];
     dict[key] = val;
-    m = re.exec(text)
+    m = re.exec(text);
     // TODO escape when value provided contains quote (mykey:"myvalue")
-    freeQuery = freeQuery.replace(new RegExp(`${key}|${val}|:`, 'g'), '').trim();
+    freeQuery = freeQuery
+      .replace(new RegExp(`${key}|${val}|:`, "g"), "")
+      .trim();
   }
-  
+
   return {
     dict,
     keys: Object.keys(dict),
     freeQuery,
   };
+}
+
+export const buildURLQuery = (obj: object) =>
+  "?" +
+  Object.entries(obj)
+    .map((pair) => pair.map(encodeURIComponent).join("="))
+    .join("&");
+
+
+/**
+ * Code borrowed from
+ * https://github.com/kentcdodds/react-hooks/blob/main/src/final/02.extra-4.js
+ */
+ export function useLocalStorageState<T>(
+  key: string,
+  defaultValue: T,
+  // the = {} fixes the error we would get from destructuring when no argument was passed
+  // Check https://jacobparis.com/blog/destructure-arguments for a detailed explanation
+  { serialize = JSON.stringify, deserialize = JSON.parse } = {}
+) {
+  const [state, setState] = useState(() => {
+    if (typeof document !== "undefined") {
+      const valueInLocalStorage = window.localStorage.getItem(key);
+      if (valueInLocalStorage) {
+        // the try/catch is here in case the localStorage value was set before
+        // we had the serialization in place
+        try {
+          return deserialize(valueInLocalStorage);
+        } catch (error) {
+          window.localStorage.removeItem(key);
+        }
+      }
+    }
+
+    return typeof defaultValue === "function" ? defaultValue() : defaultValue;
+  });
+
+  const prevKeyRef = useRef(key);
+
+  useEffect(() => {
+    if (typeof document !== "undefined") {
+      const prevKey = prevKeyRef.current;
+      if (prevKey !== key) {
+        window.localStorage.removeItem(prevKey);
+      }
+      prevKeyRef.current = key;
+      window.localStorage.setItem(key, serialize(state));
+    }
+  }, [key, state, serialize]);
+
+  return [state, setState];
 }

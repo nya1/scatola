@@ -71,7 +71,7 @@ export async function action({ request, params }: ActionArgs) {
   });
 
   return redirect(
-    composeRedirectUrlWithContext("/tasks", new URL(request.url))
+    composeRedirectUrlWithContext("/tasks", request.url)
   );
 }
 
