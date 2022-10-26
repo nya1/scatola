@@ -16,6 +16,9 @@ export abstract class ImportBaseClass {
     throw new Error(`fetchIssues must be implemented`);
   }
 
+  /**
+   * create or update task
+   */
   protected createNewTask(taskToCreate: Prisma.TaskCreateInput) {
     return __rawUpsertTask(taskToCreate);
   }

@@ -126,7 +126,8 @@ export class GitlabImporter extends ImportBaseClass {
       per_page: 100,
       scope: "all",
       issue_type: "issue",
-      created_after: createdAfter ? createdAfter.toISOString() : undefined,
+      // using updated instead of created otherwise we won't fetch updated issues
+      updated_after: createdAfter ? createdAfter.toISOString() : undefined,
       state: settings.state,
       // used to mark the issues that we want to import
       // the reaction must be added manually on the issues
